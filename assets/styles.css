@@ -1,0 +1,129 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.toolbar {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 5px;
+}
+
+#seat-grid {
+    position: relative;
+    width: 800px;
+    height: 700px;
+    border: 1px solid #aaa;
+    background-color: #f0f0f0;
+    overflow: scroll;
+    /*user-select: none;*/
+}
+
+.box {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-bottom: 100px solid #3498db; /* Color of the triangle */
+    text-align: center;
+}
+.box:hover{
+    border: 1px solid #000;
+}
+
+.box.selected {
+    border: 2px solid #000;
+}
+
+#plans {
+    margin-top: 20px;
+}
+
+.circleSelected{
+    background-color: #000000;
+}
+.setSeatNumberSelected{
+    background-color: #cf933d;
+}
+.enable_drag_drop{
+    background-color: #cf933d;
+}
+.enable_resize_selected{
+    background-color: #cf933d;
+}
+.enable_clear_selected{
+    background-color: #cf933d;
+}
+.triangle {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-bottom: 100px solid #3498db; /* Color of the triangle */
+}
+
+#seat-grid {
+    position: relative;
+    width: 770px; /* Adjust based on the grid dimensions */
+    height: 450px; /* Adjust based on the grid dimensions */
+    margin: 10px;
+    float: left;
+}
+
+.box {
+    position: absolute;
+    /* width: 30px; !* Match boxSize *!
+     height: 30px; !* Match boxSize *!*/
+    border: 1px solid #ddd; /* Optional */
+    box-sizing: border-box; /* Important for consistent resizing */
+    padding-top: 5px;
+    font-size: 12px;
+    color: #ffffff;
+}
+
+.box.circle {
+    border-radius: 50%; /* Makes the box a circle */
+}
+
+.drag-helper {
+    position: absolute;
+    z-index: 9999;
+    opacity: 0.7;
+}
+#seat_number{
+    width: 50px;
+}
+.set_price{
+    width: 50px;
+}
+#color{
+    padding: 1px 1px;
+    inline-size: 25px;
+    block-size: 27px;
+}
+
+.editSeatPlan{
+    display: block;
+    float: left;
+    position: relative;
+    width: 100%;
+}
+#edit-seat-grid{
+    display: block;
+    float: left;
+    position: relative;
+    width: 100%;
+}
+.edit_plan_title{
+    display: block;
+    float: left;
+    position: relative;
+    width: 100%;
+}
+.edit_toolbar{
+    margin-bottom: 20px;
+    display: flex;
+    width: 100%;
+    float: left;
+    gap: 5px;
+}

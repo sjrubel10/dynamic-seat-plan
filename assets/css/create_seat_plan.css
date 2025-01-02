@@ -1,0 +1,148 @@
+#parentDiv {
+    width: 1000px;
+    height: 600px;
+    border: 1px solid #333;
+    position: relative;
+    padding: 10px;
+    /*margin: auto;*/
+}
+.childDiv {
+    width: 35px;
+    height: 35px;
+    background-color: #bfe5f1;
+    border: 1px solid #c1bdbd;
+    position: absolute;
+    text-align: center;
+    line-height: 35px;
+    user-select: none;
+    font-size: 13px;
+}
+.selected {
+    border: 2px solid #000000;
+    /*border: 1px dashed red;*/
+    background-color: lightcoral;
+}
+.controls {
+    margin-bottom: 10px;
+}
+.controls input {
+    margin-right: 10px;
+}
+.circleSelected{
+    background-color: #000000;
+}
+
+.enable_drag_drop,
+.enable_resize_selected,
+.enable_clear_selected,
+.enable_set_multiselect,
+.setSeatNumberSelected,
+.enable_set_seat_number{
+    background-color: #cf933d;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+    width: 720px;
+    /*margin: auto;*/
+    margin-bottom: 20px;
+}
+
+.controls input[type="text"],
+.controls input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 150px;
+    margin-right: 5px;
+}
+
+.controls label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+.controls button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    /*background-color: #007bff;*/
+    color: #444;
+    transition: background-color 0.3s ease;
+}
+
+
+
+.controls .setSeatNumber {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+#applyChanges,
+#set_seat_number,
+#enable_resize,
+#enable_drag_drop,
+#set_multiselect,
+#clearAll,
+#savePlan {
+    font-weight: bold;
+}
+
+#applyChanges {
+    background-color: #28a745;
+    color: #fff;
+}
+
+#applyChanges:hover {
+    background-color: #218838;
+}
+
+#clearAll {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+#clearAll:hover {
+    background-color: #c82333;
+}
+
+#savePlan {
+    background-color: #37a8db;
+    color: #fff;
+}
+
+#savePlan:hover {
+    background-color: #e0a800;
+}
+
+#enable_resize,
+#enable_drag_drop,
+#set_seat_number,
+#set_multiselect {
+    /*background-color: #17a2b8;*/
+    border: 1px solid #d3cccc;
+}
+
+#enable_resize:hover,
+#enable_drag_drop:hover,
+#set_seat_number:hover,
+#set_multiselect:hover {
+    background-color: #138496;
+    color: #fff;
+}
