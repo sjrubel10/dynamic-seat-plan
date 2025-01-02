@@ -18,6 +18,9 @@ class CustomPostAjaxMetaSave {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
         add_action('wp_ajax_save_custom_meta_data', [$this, 'handle_ajax_meta_save']);
         add_action('admin_footer', [$this, 'add_inline_scripts']);
+//        add_shortcode('display_seat_plan', [$this, 'display_seat_plan_shortcode']);
+
+        add_filter( 'the_content', [ $this, 'display_seat_plan'] );
         $this->define_constants();
     }
 
@@ -57,11 +60,11 @@ class CustomPostAjaxMetaSave {
     public function render_meta_box($post) {
         wp_nonce_field('save_custom_meta', 'custom_meta_nonce');
         $plan_seats = unserialize( get_post_meta($post->ID, '_custom_field_1', true ) );
-        error_log( print_r( [ '$custom_field_1' => $plan_seats], true ) );
+//        error_log( print_r( [ '$custom_field_1' => $plan_seats], true ) );
         ?>
         <h1>Make Seat Plan</h1>
         <div class="controls" id="<?php echo esc_attr( $post->ID )?>">
-            <input type="text" id="plan-name" placeholder="Plan Name">
+<!--            <input type="text" id="plan-name" placeholder="Plan Name">-->
             <input type="hidden" id="plan_id" name="plan_id" value="<?php echo esc_attr( $post->ID );?>">
             <label>
                 Set Color:
@@ -73,10 +76,10 @@ class CustomPostAjaxMetaSave {
             </label>
             <button id="applyChanges">Apply</button>
             <div class="setSeatNumber">
-                <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>
+<!--                <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>-->
                 <input type="text" id="seat_number_prefix" placeholder="Prefix Like A ">
                 <input type="number" id="seat_number_count" placeholder="1" value="0">
-                <button class="set_seat_number" id="place_seat_number">Place Seat Number</button>
+                <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>
 
             </div>
 
@@ -212,6 +215,69 @@ class CustomPostAjaxMetaSave {
             wp_enqueue_script('create_seat_plan',SEAT_Plan_ASSETS . 'js/create_seat_plan.js', array(), SEAT_Plan_VERSION, true);
         }
     }
+
+    public function display_seat_plan($content) {
+        if (is_single() && in_the_loop() && is_main_query()) {
+            wp_enqueue_style('seat-plan-css', SEAT_Plan_ASSETS . 'css/seat-plan.css', [], '1.0.0');
+            $post_id = get_the_ID();
+            $plan_seats = unserialize(get_post_meta($post_id, '_custom_field_1', true));
+
+            if (!empty($plan_seats)) {
+                $leastLeft = PHP_INT_MAX;
+                $leastTop = PHP_INT_MAX;
+
+                foreach ($plan_seats as $item) {
+                    if (isset($item["left"])) {
+                        $currentLeft = (int)rtrim($item["left"], "px");
+                        $currentTop = (int)rtrim($item["top"], "px");
+
+                        if ($currentLeft < $leastLeft) {
+                            $leastLeft = $currentLeft;
+                        }
+                        if ($currentTop < $leastTop) {
+                            $leastTop = $currentTop;
+                        }
+                    }
+                }
+
+                // Start building custom content
+                $custom_content = '<div id="seat-grid"><div class="boxHolder">';
+
+                foreach ($plan_seats as $seat) {
+                    if (isset($seat["left"])) {
+                        $width = isset($seat['width']) ? (int)$seat['width'] : 0;
+                        $height = isset($seat['height']) ? (int)$seat['height'] : 0;
+                        $uniqueId = "seat-{$seat['id']}"; // Unique ID for each seat
+
+                        $custom_content .= '<div class="box" 
+                        id="' . esc_attr($uniqueId) . '" 
+                        data-price="' . esc_attr($seat['price']) . '" 
+                        data-seat-num="1" 
+                        style="
+                            width: ' . $width . 'px;
+                            height: ' . $height . 'px;
+                            left: ' . ((int)$seat['left'] - $leastLeft) . 'px;
+                            top: ' . ((int)$seat['top'] - $leastTop) . 'px;"
+                        title="Price: $' . esc_attr($seat['price']) . '">
+                        <div class="boxChild" 
+                            style="
+                                background-color: ' . esc_attr($seat['color']) . ';
+                                width: ' . ($width - 4) . 'px;
+                                height: ' . ($height - 3) . 'px;">
+                            <span class="seat_number">' . esc_html($seat['seat_number'] ?? '') . '</span>
+                        </div>
+                    </div>';
+                    }
+                }
+
+                $custom_content .= '</div></div>';
+                $content .= $custom_content;
+            }
+        }
+        return $content;
+    }
+
+
 }
 
 new CustomPostAjaxMetaSave();

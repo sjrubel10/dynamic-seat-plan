@@ -1,0 +1,33 @@
+
+/*Display Post*/
+#seat-grid {
+    position: relative;
+    width: 600px;
+    height: 550px;
+    margin: auto;
+    display: flex;
+    top: 10px;
+}
+.box {
+    position: absolute;
+    text-align: center;
+    line-height: 20px;
+    color: #fff;
+    cursor: pointer;
+}
+.boxChild{
+    /*border-radius: 3px;*/
+    margin: 3px 3px 3px 3px;
+    font-size: 12px;
+    /*border: 1px solid #000;*/
+    border-top-right-radius: 30px;
+    border-top-left-radius: 30px;
+}
+.box_selected{
+    background-color: #333333;
+}
+.seat_number{
+    position: absolute;
+    top: 10px;
+    left: 8px;
+}
