@@ -6,19 +6,23 @@
     padding: 10px;
     /*margin: auto;*/
 }
+#setColor{
+    width: 30px;
+}
 .childDiv {
     width: 35px;
     height: 35px;
-    background-color: #bfe5f1;
+    /*background-color: #bfe5f1;*/
     border: 1px solid #c1bdbd;
-    position: absolute;
+    position: absolute !important;
     text-align: center;
     line-height: 35px;
     user-select: none;
     font-size: 13px;
+    cursor: pointer;
 }
 .selected {
-    border: 2px solid #000000;
+    border: 1px solid #000000;
     /*border: 1px dashed red;*/
     background-color: lightcoral;
 }
@@ -37,6 +41,7 @@
 .enable_clear_selected,
 .enable_set_multiselect,
 .setSeatNumberSelected,
+.enable_erase_seat,
 .enable_set_seat_number{
     background-color: #cf933d;
 }
@@ -56,13 +61,47 @@
     margin-bottom: 20px;
 }
 
+.childDiv.dotted {
+    outline: 2px dotted #000; /* Adjust color and width as needed */
+}
+
+.movementControl{
+    display: flex;
+    position: relative;
+    margin-top: 5px;
+}
+.movement{
+    position: absolute;
+    cursor: pointer;
+}
+
+#left{
+    left: 0px;
+    top: 5px;
+}
+#right{
+    left: 50px;
+    top: 5px;
+}
+#top{
+    top: -10px;
+    left: 25px;
+}
+#bottom{
+    top: 25px;
+    left: 20px;
+}
+.movementInPx{
+    margin-left: 85px;
+}
+
 .controls input[type="text"],
 .controls input[type="number"] {
-    padding: 8px;
+    padding: 2px 5px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 14px;
-    width: 150px;
+    width: 80px;
     margin-right: 5px;
 }
 
@@ -84,17 +123,37 @@
     color: #444;
     transition: background-color 0.3s ease;
 }
+.setPriceColorHolder{
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
+.colorPriceHolder{
+    width: 50%;
+    display: flex
+}
 
 
 
 .controls .setSeatNumber {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 5px;
     /*width: 100%;*/
 }
+.planControlHolder{
+    width: 100%;
+    display: flex;
+    gap: 5px;
+}
+
+.lasso-cursor {
+    cursor: crosshair; /* Change the cursor to a "lasso" (crosshair) style */
+}
 
 #applyChanges,
+#applyColorChanges,
 #set_seat_number,
 #enable_resize,
 #enable_drag_drop,
@@ -104,12 +163,12 @@
     font-weight: bold;
 }
 
-#applyChanges {
-    background-color: #28a745;
+#applyChanges, #applyColorChanges {
+    background-color: #817a7a;
     color: #fff;
 }
 
-#applyChanges:hover {
+#applyChanges, #applyColorChanges:hover {
     background-color: #218838;
 }
 

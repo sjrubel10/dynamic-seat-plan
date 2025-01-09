@@ -60,41 +60,69 @@ class CustomPostAjaxMetaSave {
     public function render_meta_box($post) {
         wp_nonce_field('save_custom_meta', 'custom_meta_nonce');
         $plan_seats = unserialize( get_post_meta($post->ID, '_custom_field_1', true ) );
-//        error_log( print_r( [ '$custom_field_1' => $plan_seats], true ) );
+        error_log( print_r( [ '$custom_field_1' => $plan_seats], true ) );
         ?>
         <h1>Make Seat Plan</h1>
         <div class="controls" id="<?php echo esc_attr( $post->ID )?>">
 <!--            <input type="text" id="plan-name" placeholder="Plan Name">-->
             <input type="hidden" id="plan_id" name="plan_id" value="<?php echo esc_attr( $post->ID );?>">
-            <label>
-                Set Color:
-                <input type="color" id="setColor">
-            </label>
-            <label>
-                Set Price:
-                <input type="number" id="setPrice" placeholder="Enter price">
-            </label>
-            <button id="applyChanges">Apply</button>
+            <div class="setPriceColorHolder">
+                <div class="colorPriceHolder">
+                    <div>
+                        <span>Select Color</span>:
+                        <input type="color" id="setColor" value="#3498db">
+                    </div>
+                    <button id="applyColorChanges">Set Color</button>
+                </div>
+                <div class="colorPriceHolder">
+                    <div>
+                        <span> Set Price:</span>
+                        <input type="number" id="setPrice" placeholder="Enter price">
+                    </div>
+                    <button id="applyChanges">Set Price</button>
+                </div>
+            </div>
+
+
             <div class="setSeatNumber">
 <!--                <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>-->
                 <input type="text" id="seat_number_prefix" placeholder="Prefix Like A ">
                 <input type="number" id="seat_number_count" placeholder="1" value="0">
                 <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>
-
             </div>
 
-            <button class="set_multiselect" id="set_multiselect">Multiselect</button>
-            <button class="make_circle" id="enable_resize">Resize</button>
-            <button class="drag_drop" id="enable_drag_drop">Drag & Drop</button>
-            <button id="clearAll">Clear</button>
+            <div class="planControlHolder">
+                <button class="set_multiselect" id="set_multiselect">Multiselect</button>
+                <button class="set_single_select" id="set_single_select">Single Select</button>
+                <button class="make_circle" id="enable_resize">Resize</button>
+                <button class="drag_drop" id="enable_drag_drop">Drag & Drop</button>
+                <button class="removeSelected" id="removeSelected">Erase</button>
+            </div>
+
+            <div class="rotateControls">
+                <button id="rotateLeft">Rotate Left</button>
+                <button id="rotateRight">Rotate Right</button>
+                <input type="text" name="rotationAngle" id="rotationAngle" value="10" placeholder="10 degree">
+            </div>
+
+
+            <button id="clearAll"> All Clear</button>
             <button id="savePlan">Save Plan</button>
+
+            <div class="movementControl">
+                <div id="left" class="movement">Left</div>
+                <div id="right" class="movement">Right</div>
+                <div id="top" class="movement">Top</div>
+                <div id="bottom" class="movement">Bottom</div>
+                <input class="movementInPx" id="movementInPx" name="movementInPx" type="number" value="15" placeholder="movement in px">
+            </div>
         </div>
         <!--        <div id="seat-grid" class="seat-grid"></div>-->
         <?php
 
         $box_size = 35;
         $rows = 20;
-        $columns = 15;
+        $columns = 14;
         $childWidth = $box_size;
         $childHeight = $box_size + 5;
         $gap = 5;
@@ -122,6 +150,7 @@ class CustomPostAjaxMetaSave {
             $le = $left ;
             $width = $childWidth;
             $height = $childHeight;
+            $degree = 0;
             if( is_array( $plan_seats ) && count( $plan_seats ) > 0 ) {
                 foreach ($plan_seats as $plan_seat) {
                     if ($plan_seat['col'] == $row && $plan_seat['row'] == $col) {
@@ -134,6 +163,7 @@ class CustomPostAjaxMetaSave {
                         $zindex = $plan_seat['z_index'];
                         $to = (int)$plan_seat['top'];
                         $le = (int)$plan_seat['left'];
+                        $degree = (int)$plan_seat['data_degree'];
                         break;
                     }
                 }
@@ -156,11 +186,13 @@ class CustomPostAjaxMetaSave {
             }
 //    echo '<div class="childDiv"  data-row="'.$col.'" data-col="'.$row.'" data-id="' . $col . '-'. $row. ' " data-price="0" style="position: absolute; width: ' . $childWidth . 'px; height: ' . $childHeight . 'px; left: ' . $top . 'px; top: ' . $left . 'px;">' . $id . '</div>';
             echo '<div class=" childDiv ' . $class . '"
+              id = "div'.$col.'_'.$row.'"
               data-id="' . $col . '-' . $row . '" 
               data-row="' . $col . '" 
               data-col="' . $row . '" 
               data-seat-num=" ' . $seat_num . ' " 
               data-price=" ' . $seat_price . ' " 
+              data-degree=0
               style="
               left: ' . $left . 'px; 
               top: ' . $top . 'px;
@@ -168,6 +200,7 @@ class CustomPostAjaxMetaSave {
               height: ' . $hi . 'px;
               background-color: '.$color.';
               z-index: '.$zindex.';
+              transform: rotate('.$degree.'deg);
               "> '.$seat_number.'
           </div>';
         }
@@ -213,16 +246,19 @@ class CustomPostAjaxMetaSave {
         global $post;
         if ($post && $post->post_type === 'custom_item') {
             wp_enqueue_script('create_seat_plan',SEAT_Plan_ASSETS . 'js/create_seat_plan.js', array(), SEAT_Plan_VERSION, true);
+
         }
     }
 
     public function display_seat_plan($content) {
         if (is_single() && in_the_loop() && is_main_query()) {
-            wp_enqueue_style('seat-plan-css', SEAT_Plan_ASSETS . 'css/seat-plan.css', [], '1.0.0');
+            wp_enqueue_style('seat-plan-css', SEAT_Plan_ASSETS . 'css/seat-plan.css', [], SEAT_Plan_VERSION );
+            wp_enqueue_script('view_seat_info', SEAT_Plan_ASSETS . 'js/view_seat_info.js',  ['jquery'], SEAT_Plan_VERSION );
             $post_id = get_the_ID();
             $plan_seats = unserialize(get_post_meta($post_id, '_custom_field_1', true));
 
-            if (!empty($plan_seats)) {
+            error_log( print_r( [ '$plan_seats' => $plan_seats ], true ) );
+            if (!empty($plan_seats) && is_array( $plan_seats )) {
                 $leastLeft = PHP_INT_MAX;
                 $leastTop = PHP_INT_MAX;
 
@@ -241,7 +277,10 @@ class CustomPostAjaxMetaSave {
                 }
 
                 // Start building custom content
-                $custom_content = '<div id="seat-grid"><div class="boxHolder">';
+                $custom_content = '<div id="seat-info" style="margin-top: 20px; font-size: 16px;">
+                                        <strong>Seat Info:</strong> <span id="info"></span>
+                                    </div>
+                                    <div id="seat-grid"><div class="boxHolder">';
 
                 foreach ($plan_seats as $seat) {
                     if (isset($seat["left"])) {
@@ -257,7 +296,8 @@ class CustomPostAjaxMetaSave {
                             width: ' . $width . 'px;
                             height: ' . $height . 'px;
                             left: ' . ((int)$seat['left'] - $leastLeft) . 'px;
-                            top: ' . ((int)$seat['top'] - $leastTop) . 'px;"
+                            top: ' . ((int)$seat['top'] - $leastTop) . 'px;
+                            transform: rotate('.(int)$seat['data_degree'].'deg);"
                         title="Price: $' . esc_attr($seat['price']) . '">
                         <div class="boxChild" 
                             style="

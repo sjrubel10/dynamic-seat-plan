@@ -11,9 +11,21 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    let isLassoEnabled = false;
     $(document).on('click', '#set_multiselect', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_set_multiselect');
+        isLassoEnabled = !isLassoEnabled;
+        if ( isLassoEnabled ) {
+            $('body').addClass('lasso-cursor'); // Add custom cursor class
+        } else {
+            $('body').removeClass('lasso-cursor'); // Remove custom cursor class
+        }
+    });
+
+    $(document).on('click', '#removeSelected', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('enable_erase_seat');
     });
 
     $(document).on('click', '#set_seat_number', function (e) {
@@ -21,12 +33,34 @@ jQuery(document).ready(function ($) {
         $(this).toggleClass('enable_set_seat_number');
     });
 
-
-    $(document).on('click', '#place_seat_number', function (e) {
+    $(document).on('click', '.movement', function (e) {
         e.preventDefault();
-        // $(this).toggleClass('enable_set_seat_number');
-        // alert('Ok');
-        console.log( selectedSeatsDivs );
+        const text = $(this).text();
+        const offset = parseInt($("input[name='movementInPx']").val(), 10) || 15; // Default to 15 if empty or invalid
+        let offsetX = 0;
+        let offsetY = 0;
+        if ( text === 'Left' ) {
+            offsetX = -offset;
+        } else if ( text === 'Right' ) {
+            offsetX = offset;
+        } else if ( text === 'Top' ) {
+            offsetY = -offset;
+        } else if ( text === 'Bottom' ) {
+            offsetY = offset;
+        }
+
+        selectedDivs.forEach(div => {
+            const $div = $(div);
+            $div.css({
+                top: $div.position().top + offsetY + "px",
+                left: $div.position().left + offsetX + "px"
+            });
+        });
+    });
+
+
+    $(document).on('click', '#set_seat_number', function (e) {
+        e.preventDefault();
         let start = 0;
         let seat_prefix = $("#seat_number_prefix").val();
         let count = parseInt($("#seat_number_count").val(), 10);
@@ -58,18 +92,37 @@ jQuery(document).ready(function ($) {
     let selectedDivs = [];
     let selectedSeatsDivs = [];
 
-    $(document).on('click', '#clearAll', function () {
+    var rotationData = {}; // Store rotation angles and positions for each div
+    var selectionOrder = [];
+    var forReverse = {};
+
+    $(document).on('click', '#clearAll', function ( e ) {
+        e.preventDefault();
         $('.childDiv').removeClass('save');
         $('.childDiv').removeClass('selected');
         $('.childDiv').css('background', '');
         selectedDivs = [];
         selectedSeatsDivs = [];
+
+        let previousPosition = 0;
+        selectionOrder.forEach((id, index) => {
+            previousPosition = forReverse[id].position;
+            let angle = 0;
+            $(`#${id}`).css({
+                transform: `rotate(${angle}deg)`,
+                left: `${previousPosition}px`,
+                'z-index': 0,
+            });
+        });
+        rotationData = forReverse = {};
+        selectionOrder = [];
+
     });
     // Handle selection
     $(".childDiv").on("click", function (e) {
         e.stopPropagation();
 
-        let count = parseInt($("#seat_number_count").val(), 10);
+        /*let count = parseInt($("#seat_number_count").val(), 10);
         if( $("#set_seat_number").hasClass('enable_set_seat_number') ){
             count++;
             let seat_prefix = $("#seat_number_prefix").val();
@@ -82,18 +135,15 @@ jQuery(document).ready(function ($) {
             // console.log( count );
             $(this).text( seat_number );
             $(this).attr('data-seat-num', seat_number);
-        }
+        }*/
 
         $(this).toggleClass("selected");
         const $this = $(this);
 
-        /*if ($this.hasClass("save ") && !($this.hasClass("selected") ){
-            $(this).css(){
-                'backgroun'
-            }
-        }*/
 
         if ($this.hasClass("selected")) {
+
+            $this.css('z-index', 10);
 
             selectedDivs.push($this);
             selectedSeatsDivs.push($this);
@@ -147,25 +197,105 @@ jQuery(document).ready(function ($) {
                 });
             }
         } else {
+            // $this.css('z-index', '');
             // Remove resizable functionality for deselected div
-
             selectedDivs = selectedDivs.filter(div => div[0] !== $this[0]);
+            selectedSeatsDivs = selectedSeatsDivs.filter(div => div[0] !== $this[0]);
         }
+
+        if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            $(this).removeClass('save');
+            $(this).removeClass('selected');
+            $(this).css({
+                "background": "",
+                "transform": "rotate(0deg)"
+            });
+        }
+
+        const rotate_id = $(this).attr('id');
+        make_rotate( rotate_id );
+        // console.log( rotate_id, leftPosition, rotationData );
+
+    });
+
+    function make_rotate( rotate_id ){
+        let id = '#' + rotate_id;
+        let leftPosition = $(id).css('left');
+        leftPosition = parseInt(leftPosition, 10);
+        if ($('#'+rotate_id).hasClass('rotateSelected')) {
+            $(id).removeClass('rotateSelected');
+            selectionOrder = selectionOrder.filter(divId => divId !== rotate_id ); // Remove from order
+        } else {
+            $(id).addClass('rotateSelected');
+            selectionOrder.push( rotate_id ); // Add to order
+        }
+        if ( !( rotate_id in rotationData)) {
+            rotationData[rotate_id] = { angle: 0, position: leftPosition };
+            forReverse[rotate_id] = { angle: 0, position: leftPosition };
+        }
+    }
+
+    let distance = 10;
+    // Rotate Left button click
+    $('#rotateLeft').click(function ( e ) {
+        distance = $("#rotationAngle").val();
+        distance = parseInt(distance, 10);
+        e.preventDefault();
+        selectionOrder.forEach((id, index) => {
+            const movement = (index) * distance;
+            rotationData[id].angle -= distance;
+            rotationData[id].position += movement;
+
+            $(`#${id}`).attr('data-degree', rotationData[id].angle);
+            $(`#${id}`).css({
+                transform: `rotate(${rotationData[id].angle}deg)`,
+                left: `${rotationData[id].position}px`,
+                'z-index': 10,
+            });
+        });
+    });
+
+    // Rotate Right button click
+    $('#rotateRight').click(function ( e ) {
+        distance = $("#rotationAngle").val();
+        distance = parseInt(distance, 10);
+        e.preventDefault();
+        selectionOrder.forEach((id, index) => {
+            const movement = (index) * distance ;
+            rotationData[id].angle += distance;
+            rotationData[id].position -= movement;
+            $('#'+id).attr('data-degree', rotationData[id].angle);
+            $(`#${id}`).css({
+                transform: `rotate(${rotationData[id].angle}deg)`,
+                left: `${rotationData[id].position}px`,
+                'z-index': 10,
+            });
+        });
     });
 
     // Drag functionality
-
-
     // Apply color and price changes
-    $("#applyChanges").on("click", function (e) {
+    $("#applyColorChanges").on("click", function (e) {
         e.preventDefault();
         const color = $("#setColor").val();
+        selectedDivs.forEach(div => {
+            if( div.hasClass('selected')){
+                div.addClass("save").removeClass('selected');
+                if (color) div.css("background-color", color);
+            }
+
+        });
+        selectedDivs = [];
+    });
+    $("#applyChanges").on("click", function (e) {
+        e.preventDefault();
+
         const price = $("#setPrice").val();
 
         selectedDivs.forEach(div => {
             if( div.hasClass('selected')){
                 div.addClass("save").removeClass('selected');
-                if (color) div.css("background-color", color);
+                // if (color) div.css("background-color", color);
                 if (price) div.attr("data-price", price)/*.text(price)*/;
             }
 
@@ -188,6 +318,7 @@ jQuery(document).ready(function ($) {
                 const row = $(this).data('row');
                 const col = $(this).data('col');
                 const seat_number = $(this).data('seat-num');
+                const data_degree = $(this).data('degree');
                 const color = $(this).css('background-color');
                 const price = $(this).data('price') || 0;
                 const width =$(this).css('width') || 0;
@@ -196,7 +327,7 @@ jQuery(document).ready(function ($) {
                 const left = $(this).css('left') || 0;
                 const top = $(this).css('top') || 0;
 
-                selectedSeats.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index });
+                selectedSeats.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree });
             }
         });
 
@@ -220,7 +351,7 @@ jQuery(document).ready(function ($) {
                 console.error(error);
             }
         });*/
-        console.log( selectedSeats, postId );
+        // console.log( selectedSeats, postId );
         $.ajax({
             url: ajax_object.ajax_url,
             type: 'POST',
@@ -232,7 +363,7 @@ jQuery(document).ready(function ($) {
             },
             success: function (response) {
                 if (response.success) {
-                    alert('Meta data saved successfully!');
+                    alert('Seat Plan data saved successfully! Please publish your post');
                     // $('#post').off('submit').submit();
                 } else {
                     alert('Error: ' + response.data.message);
@@ -341,11 +472,15 @@ jQuery(document).ready(function ($) {
     let isMultiSelecting = false;
     let startPoint = { x: 0, y: 0 };
     let selectionBox = null;
+
+
     let $seatGrid = $("#parentDiv");
+
     $seatGrid.on('mousedown', function (e) {
         e.preventDefault();
+
         if (!$("#enable_drag_drop").hasClass("enable_drag_drop")) {
-            if( $("#set_multiselect").hasClass('enable_set_multiselect')){
+            if ($("#set_multiselect").hasClass('enable_set_multiselect')) {
                 isMultiSelecting = true;
             }
 
@@ -360,12 +495,12 @@ jQuery(document).ready(function ($) {
                 width: 0,
                 height: 0,
             });
-
-            e.preventDefault();
         }
     });
+
     $seatGrid.on('mousemove', function (e) {
         e.preventDefault();
+
         if (isMultiSelecting) {
             const currentPoint = { x: e.pageX, y: e.pageY };
 
@@ -397,40 +532,30 @@ jQuery(document).ready(function ($) {
                     boxPosition.top < top + height &&
                     boxPosition.bottom > top
                 ) {
-                    $box.addClass('hovered');
+                    $box.addClass('dotted');
                 } else {
-                    $box.removeClass('hovered');
+                    $box.removeClass('dotted');
                 }
             });
         }
     });
-    // let count = 0;
+
     $(document).on('mouseup', function (e) {
         e.preventDefault();
+
         if (isMultiSelecting) {
             isMultiSelecting = false;
-
-            let count = parseInt($("#seat_number_count").val(), 10);
-            $('.childDiv.hovered').each(function ( div ) {
-
-                if( $("#set_seat_number").hasClass('enable_set_seat_number') ){
-                    count++;
-                    let seat_prefix = $("#seat_number_prefix").val();
-                    $("#seat_number_count").val(count);
-                    if( seat_prefix !== '' ){
-                        var seat_number = seat_prefix+'-'+count;
-                    }else{
-                        seat_number = count;
-                    }
-                    // console.log( count );
-                    $(this).text( seat_number );
-                    $(this).attr('data-seat-num', seat_number);
+            $('.childDiv.dotted').each(function () {
+                const $this = $(this);
+                make_rotate( $(this).attr('id') );
+                selectedDivs.push($this);
+                selectedSeatsDivs.push($this);
+                $this.toggleClass('selected').removeClass('dotted');
+                $this.css('z-index', 10);
+                if (!$this.hasClass('selected')) {
+                    selectedDivs = selectedDivs.filter(div => div[0] !== $this[0]);
+                    selectedSeatsDivs = selectedSeatsDivs.filter(div => div[0] !== $this[0]);
                 }
-
-                // console.log( seat_prefix );
-                selectedDivs.push($(this));
-                selectedSeatsDivs.push($(this));
-                $(this).toggleClass('selected').removeClass('hovered');
             });
 
             // Remove the selection box
@@ -440,9 +565,5 @@ jQuery(document).ready(function ($) {
             }
         }
     });
-
-    /*function seat_number(){
-
-    }*/
 
 });
