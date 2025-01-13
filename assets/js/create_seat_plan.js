@@ -11,21 +11,62 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    let isLassoEnabled = false;
+    // Set seat;
+    $(document).on('click', '#set_seat', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('enable_set_seat');
+        if( $(this).hasClass('enable_set_seat' ) ){
+            $('#set_single_select').removeClass('enable_single_seat_selection');
+            $('#set_multiselect').removeClass('enable_set_multiselect');
+            $('body').removeClass('lasso-cursor');
+        }
+    });
+    // let isLassoEnabled = false;
     $(document).on('click', '#set_multiselect', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_set_multiselect');
-        isLassoEnabled = !isLassoEnabled;
+        /*isLassoEnabled = !isLassoEnabled;
         if ( isLassoEnabled ) {
             $('body').addClass('lasso-cursor'); // Add custom cursor class
         } else {
             $('body').removeClass('lasso-cursor'); // Remove custom cursor class
+        }*/
+
+        if( $(this).hasClass('enable_set_multiselect' ) ){
+            $('#set_single_select').removeClass('enable_single_seat_selection');
+            $('#set_seat').removeClass('enable_set_seat');
+            $('body').addClass('lasso-cursor');
+        }else{
+            $('body').removeClass('lasso-cursor');
         }
     });
 
     $(document).on('click', '#removeSelected', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_erase_seat');
+    });
+
+    $(document).on('click', '#set_single_select', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('enable_single_seat_selection');
+        if( $(this).hasClass('enable_single_seat_selection' ) ){
+            $('#set_multiselect').removeClass('enable_set_multiselect');
+            $('#set_seat').removeClass('enable_set_seat');
+            $('body').removeClass('lasso-cursor');
+
+            selectedDivs = [];
+            selectedDraggableDivs = [];
+            selectedSeatsDivs = [];
+
+            rotationData = {}; // Store rotation angles and positions for each div
+            selectionOrder = [];
+
+            $('.childDiv.selected').each(function () {
+                const $this = $(this);
+
+                $this.removeClass('rotateSelected selected');
+            });
+        }
     });
 
     $(document).on('click', '#set_seat_number', function (e) {
@@ -77,7 +118,12 @@ jQuery(document).ready(function ($) {
             }
 
         });
-        selectedSeatsDivs = [];
+        selectedSeatsDivs = selectedDraggableDivs = [];
+    });
+
+    $(document).on('click', '#setText', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('enable_set_text');
     });
 
     $(document).on('click', '#enable_drag_drop', function (e) {
@@ -85,11 +131,13 @@ jQuery(document).ready(function ($) {
         $(this).toggleClass('enable_drag_drop');
         if( !$(this).hasClass( 'enable_drag_drop' )){
             $(".childDiv").removeClass("ui-draggable ui-draggable-handle");
+            selectedDraggableDivs = [];
         }
         //ui-draggable ui-draggable-handle
     });
 
     let selectedDivs = [];
+    let selectedDraggableDivs = [];
     let selectedSeatsDivs = [];
 
     var rotationData = {}; // Store rotation angles and positions for each div
@@ -102,6 +150,7 @@ jQuery(document).ready(function ($) {
         $('.childDiv').removeClass('selected');
         $('.childDiv').css('background', '');
         selectedDivs = [];
+        selectedDraggableDivs = [];
         selectedSeatsDivs = [];
 
         let previousPosition = 0;
@@ -119,6 +168,7 @@ jQuery(document).ready(function ($) {
 
     });
     // Handle selection
+    let seat_num = 0;
     $(".childDiv").on("click", function (e) {
         e.stopPropagation();
 
@@ -137,15 +187,50 @@ jQuery(document).ready(function ($) {
             $(this).attr('data-seat-num', seat_number);
         }*/
 
-        $(this).toggleClass("selected");
+        // $(this).toggleClass("selected");
         const $this = $(this);
+        if( $('#set_single_select').hasClass('enable_single_seat_selection' ) && $this.hasClass('save') ){
+            $this.siblings().removeClass('selected'); // Remove selection from other items in the group
+            $this.toggleClass("selected");
+            selectedDivs = [];
+            selectedDraggableDivs = [];
+            selectedSeatsDivs = [];
+            rotationData = {}; // Store rotation angles and positions for each div
+            selectionOrder = [];
+            forReverse = {};
+        }else{
+            if( $this.hasClass('save') && !$('#set_seat').hasClass('enable_set_seat' ) ){
+                $this.toggleClass("selected");
+            }
+
+        }
+
+        if( $('#set_seat').hasClass('enable_set_seat' ) && !$this.hasClass('save') ){
+            seat_num++;
+            // $this.toggleClass("selected");
+            let color = $('#setColor').val();
+            $this.addClass("save");
+            $this.css({
+                'background-color' : color,
+            });
+            // $this.attr('data-degree', rotationData[id].angle);
+            $this.attr('data-seat-num', seat_num);
+            $this.text(seat_num);
+            const rotate_id = $(this).attr('id');
+            make_rotate( rotate_id );
+        }
+
 
 
         if ($this.hasClass("selected")) {
 
-            $this.css('z-index', 10);
+            $this.css({
+                'z-index': 15,
+                // 'border': '1px solid #c1bdbd'
+            });
 
             selectedDivs.push($this);
+            selectedDraggableDivs.push($this);
             selectedSeatsDivs.push($this);
             if( $('#enable_resize').hasClass('enable_resize_selected')) {
                 if (!$this.data("ui-resizable")) {
@@ -166,7 +251,10 @@ jQuery(document).ready(function ($) {
                             const newZIndex = maxZIndex + 10;
                             $(this).css('z-index', newZIndex); // Apply the new z-index
                         },
-                        stop: debounce(300)
+                        stop: debounce(function () {
+                            console.log('Resize operation stopped.');
+                            // Add your stop event logic here
+                        }, 300)
                     });
                 }
             }
@@ -184,23 +272,41 @@ jQuery(document).ready(function ($) {
                         const offsetX = ui.position.left - current.position().left;
                         const offsetY = ui.position.top - current.position().top;
 
-                        selectedDivs.forEach(div => {
-                            if (div[0] !== current[0]) {
-                                div.css({
-                                    top: div.position().top + offsetY + "px",
-                                    left: div.position().left + offsetX + "px"
-                                });
-                            }
-                        });
+                        // console.log( selectedDraggableDivs.length );
+                        if(  selectedDraggableDivs.length > 0 ) {
+                            selectedDraggableDivs.forEach(div => {
+                                if (div[0] !== current[0]) {
+                                    div.css({
+                                        top: div.position().top + offsetY + "px",
+                                        left: div.position().left + offsetX + "px"
+                                    });
+                                }
+                            });
+                        }
                     },
-                    stop: debounce(300)
+                    stop: debounce(function () {
+                        console.log('Drag operation stopped.');
+                        // Add your stop event logic here
+                    }, 300)
                 });
             }
+
         } else {
             // $this.css('z-index', '');
             // Remove resizable functionality for deselected div
             selectedDivs = selectedDivs.filter(div => div[0] !== $this[0]);
+            selectedDraggableDivs = selectedDraggableDivs.filter(div => div[0] !== $this[0]);
             selectedSeatsDivs = selectedSeatsDivs.filter(div => div[0] !== $this[0]);
+        }
+
+        if( $('#setText').hasClass('enable_set_text')) {
+            let inputtext = `
+                <div class="set_text_holder">
+                 <span class="close_set_text">X</span>
+                 <input class="set_text_display" value="" placeholder="set your text here">
+                 <button>Set text</button>
+                </div>`
+            $(this).html( inputtext );
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
@@ -210,10 +316,13 @@ jQuery(document).ready(function ($) {
                 "background": "",
                 "transform": "rotate(0deg)"
             });
-        }
+            $this.attr({
+                'data-seat-num': '',
+                'data-price': 0
+            });
 
-        const rotate_id = $(this).attr('id');
-        make_rotate( rotate_id );
+            $this.text('');
+        }
         // console.log( rotate_id, leftPosition, rotationData );
 
     });
@@ -221,7 +330,9 @@ jQuery(document).ready(function ($) {
     function make_rotate( rotate_id ){
         let id = '#' + rotate_id;
         let leftPosition = $(id).css('left');
+        let topPosition = $(id).css('top');
         leftPosition = parseInt(leftPosition, 10);
+        topPosition = parseInt(topPosition, 10);
         if ($('#'+rotate_id).hasClass('rotateSelected')) {
             $(id).removeClass('rotateSelected');
             selectionOrder = selectionOrder.filter(divId => divId !== rotate_id ); // Remove from order
@@ -230,51 +341,99 @@ jQuery(document).ready(function ($) {
             selectionOrder.push( rotate_id ); // Add to order
         }
         if ( !( rotate_id in rotationData)) {
-            rotationData[rotate_id] = { angle: 0, position: leftPosition };
-            forReverse[rotate_id] = { angle: 0, position: leftPosition };
+            rotationData[rotate_id] = { angle: 0, position: leftPosition, topPosition: topPosition };
+            forReverse[rotate_id] = { angle: 0, position: leftPosition, topPosition: topPosition };
         }
     }
 
     let distance = 10;
     // Rotate Left button click
+    let getOption = 'top-to-bottom';
     $('#rotateLeft').click(function ( e ) {
+        getOption =  $("select[name='rotationHandle']").val().trim();
         distance = $("#rotationAngle").val();
         distance = parseInt(distance, 10);
         e.preventDefault();
         selectionOrder.forEach((id, index) => {
             const movement = (index) * distance;
             rotationData[id].angle -= distance;
-            rotationData[id].position += movement;
+            if( getOption === 'top-to-bottom' ) {
+                rotationData[id].position += movement;
+            }else if( getOption === 'bottom-to-top' ){
+                rotationData[id].position -= movement;
+            }else if( getOption === 'right-to-left' ){
+                rotationData[id].topPosition += movement;
+            }else if( getOption === 'left-to-right' ){
+                rotationData[id].topPosition -= movement;
+            }
 
             $(`#${id}`).attr('data-degree', rotationData[id].angle);
-            $(`#${id}`).css({
+            /*$(`#${id}`).css({
                 transform: `rotate(${rotationData[id].angle}deg)`,
                 left: `${rotationData[id].position}px`,
                 'z-index': 10,
-            });
+            });*/
+            if( getOption === 'top-to-bottom' || getOption === 'bottom-to-top' ){
+                $(`#${id}`).css({
+                    transform: `rotate(${rotationData[id].angle}deg)`,
+                    left: `${rotationData[id].position}px`,
+                });
+            }else if( getOption === 'right-to-left' || getOption === 'left-to-right' ){
+                $(`#${id}`).css({
+                    transform: `rotate(${rotationData[id].angle}deg)`,
+                    top: `${rotationData[id].topPosition}px`,
+                });
+            }
         });
     });
 
     // Rotate Right button click
     $('#rotateRight').click(function ( e ) {
+        getOption =  $("select[name='rotationHandle']").val().trim();
         distance = $("#rotationAngle").val();
         distance = parseInt(distance, 10);
         e.preventDefault();
         selectionOrder.forEach((id, index) => {
             const movement = (index) * distance ;
+            // console.log( id );
             rotationData[id].angle += distance;
-            rotationData[id].position -= movement;
+            if( getOption === 'top-to-bottom' ){
+                rotationData[id].position -= movement;
+            }else if( getOption === 'bottom-to-top' ){
+                rotationData[id].position += movement;
+            }else if( getOption === 'right-to-left' ){
+                rotationData[id].topPosition -= movement;
+            }else if( getOption === 'left-to-right' ){
+                rotationData[id].topPosition += movement;
+            }
+
             $('#'+id).attr('data-degree', rotationData[id].angle);
-            $(`#${id}`).css({
-                transform: `rotate(${rotationData[id].angle}deg)`,
-                left: `${rotationData[id].position}px`,
-                'z-index': 10,
-            });
+            if( getOption === 'top-to-bottom' || getOption === 'bottom-to-top' ){
+                $(`#${id}`).css({
+                    transform: `rotate(${rotationData[id].angle}deg)`,
+                    left: `${rotationData[id].position}px`,
+                });
+            }else if( getOption === 'right-to-left' || getOption === 'left-to-right' ){
+                $(`#${id}`).css({
+                    transform: `rotate(${rotationData[id].angle}deg)`,
+                    top: `${rotationData[id].topPosition}px`,
+                });
+            }
+
         });
     });
 
+    $(document).on( 'click', '#rotateDone', function ( e ) {
+        e.preventDefault();
+        rotationData = {}; // Store rotation angles and positions for each div
+        selectionOrder = [];
+    })
     // Drag functionality
     // Apply color and price changes
+    $("#setColor").on("click", function (e) {
+        // alert('Ok');
+        let color = '';
+    });
     $("#applyColorChanges").on("click", function (e) {
         e.preventDefault();
         const color = $("#setColor").val();
@@ -285,7 +444,7 @@ jQuery(document).ready(function ($) {
             }
 
         });
-        selectedDivs = [];
+        selectedDivs = selectedDraggableDivs = [];
     });
     $("#applyChanges").on("click", function (e) {
         e.preventDefault();
@@ -300,8 +459,8 @@ jQuery(document).ready(function ($) {
             }
 
         });
-        selectedDivs = [];
-        // savePositions();
+        selectedDivs = selectedDraggableDivs = [];
+
     });
 
     $('#savePlan').on('click', function (e) {
@@ -406,7 +565,7 @@ jQuery(document).ready(function ($) {
             return;
         }
         // selectedSeats.sort((a, b) => a.col - b.col);
-        console.log( selectedSeats, ajax_object );
+        // console.log( selectedSeats, ajax_object );
         // console.log( ajax_object );
 
 
@@ -480,21 +639,23 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
 
         if (!$("#enable_drag_drop").hasClass("enable_drag_drop")) {
-            if ($("#set_multiselect").hasClass('enable_set_multiselect')) {
+            if ( $("#set_multiselect").hasClass('enable_set_multiselect') ) {
                 isMultiSelecting = true;
+
+
+                $('.childDiv').removeClass('hovered'); // Clear previous hover highlights
+
+                startPoint = {x: e.pageX, y: e.pageY};
+                // console.log(startPoint);
+
+                selectionBox = $('<div>').addClass('selection-box').appendTo($seatGrid);
+                selectionBox.css({
+                    left: startPoint.x,
+                    top: startPoint.y,
+                    width: 0,
+                    height: 0,
+                });
             }
-
-            $('.childDiv').removeClass('hovered'); // Clear previous hover highlights
-
-            startPoint = { x: e.pageX, y: e.pageY };
-
-            selectionBox = $('<div>').addClass('selection-box').appendTo($seatGrid);
-            selectionBox.css({
-                left: startPoint.x,
-                top: startPoint.y,
-                width: 0,
-                height: 0,
-            });
         }
     });
 
@@ -516,7 +677,7 @@ jQuery(document).ready(function ($) {
                 height: height,
             });
 
-            $('.childDiv').each(function () {
+            $('.childDiv.save').each(function () {
                 const $box = $(this);
                 const boxOffset = $box.offset();
                 const boxPosition = {
@@ -545,15 +706,17 @@ jQuery(document).ready(function ($) {
 
         if (isMultiSelecting) {
             isMultiSelecting = false;
-            $('.childDiv.dotted').each(function () {
+            $('.childDiv.save.dotted').each(function () {
                 const $this = $(this);
                 make_rotate( $(this).attr('id') );
                 selectedDivs.push($this);
+                selectedDraggableDivs.push($this);
                 selectedSeatsDivs.push($this);
                 $this.toggleClass('selected').removeClass('dotted');
                 $this.css('z-index', 10);
-                if (!$this.hasClass('selected')) {
+                if ( !$this.hasClass('selected') ) {
                     selectedDivs = selectedDivs.filter(div => div[0] !== $this[0]);
+                    selectedDraggableDivs = selectedDraggableDivs.filter(div => div[0] !== $this[0]);
                     selectedSeatsDivs = selectedSeatsDivs.filter(div => div[0] !== $this[0]);
                 }
             });

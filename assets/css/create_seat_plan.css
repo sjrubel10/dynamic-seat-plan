@@ -1,3 +1,10 @@
+.seatPlanHolder{
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: scroll;
+}
 #parentDiv {
     width: 1000px;
     height: 600px;
@@ -13,7 +20,7 @@
     width: 35px;
     height: 35px;
     /*background-color: #bfe5f1;*/
-    border: 1px solid #c1bdbd;
+    border: 1px dotted #c1bdbd;
     position: absolute !important;
     text-align: center;
     line-height: 35px;
@@ -21,14 +28,39 @@
     font-size: 13px;
     cursor: pointer;
 }
+/*.selection-box{
+    border: 1px dotted #000000;
+}*/
 .selected {
-    border: 1px solid #000000;
-    /*border: 1px dashed red;*/
+    /*border: 1px solid #000000;*/
+    /*border: 2px dotted #000000;*/
+    border: 2px dashed #000000;
     background-color: lightcoral;
 }
+/*.save{
+    border: 1px solid #c1bdbd;
+}*/
 .controls {
     margin-bottom: 10px;
 }
+
+.removeSelected,
+.set_single_select,
+.setText{
+    border: 1px solid #d3cccc !important;
+    font-weight: bold;
+}
+
+.rotateControls{
+    display: flex;
+    width: 100%;
+}
+
+.rotateDone{
+    border: 1px solid #d3cccc !important;
+    font-weight: bold;
+}
+
 .controls input {
     margin-right: 10px;
 }
@@ -36,14 +68,36 @@
     background-color: #000000;
 }
 
+.set_text_holder{
+    display: block;
+    width: 150px;
+    position: absolute;
+    height: auto;
+    margin: 5px;
+    padding: 5px;
+    background-color: #990000;
+    z-index: 999;
+}
+.set_text_display{
+    display: flex;
+    min-width: 100px;
+}
+.close_set_text{
+    color: #fff;
+}
+
+.enable_single_seat_selection,
+.enable_set_text,
 .enable_drag_drop,
 .enable_resize_selected,
 .enable_clear_selected,
 .enable_set_multiselect,
+.enable_set_seat,
 .setSeatNumberSelected,
 .enable_erase_seat,
 .enable_set_seat_number{
     background-color: #cf933d;
+    color: #fff;
 }
 
 .controls {
@@ -120,7 +174,7 @@
     font-size: 14px;
     cursor: pointer;
     /*background-color: #007bff;*/
-    color: #444;
+    /*color: #444;*/
     transition: background-color 0.3s ease;
 }
 .setPriceColorHolder{
@@ -158,6 +212,7 @@
 #enable_resize,
 #enable_drag_drop,
 #set_multiselect,
+#set_seat,
 #clearAll,
 #savePlan {
     font-weight: bold;
@@ -193,12 +248,17 @@
 #enable_resize,
 #enable_drag_drop,
 #set_seat_number,
+#set_seat,
 #set_multiselect {
     /*background-color: #17a2b8;*/
     border: 1px solid #d3cccc;
 }
 
+#setText:hover,
 #enable_resize:hover,
+#removeSelected:hover,
+#rotateDone:hover,
+#set_single_select:hover,
 #enable_drag_drop:hover,
 #set_seat_number:hover,
 #set_multiselect:hover {
