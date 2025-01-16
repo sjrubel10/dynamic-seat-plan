@@ -1,20 +1,37 @@
-.seatPlanHolder{
+.seatContentHolder{
     display: flex;
     position: relative;
     width: 100%;
     height: 500px;
+}
+.seatPlanHolder{
+    display: flex;
+    position: relative;
+    width: calc( 100% - 120px );
+    height: 500px;
     overflow: scroll;
+}
+.seatActionControl{
+    display: block;
+    width: 120px;
+    margin-left: 12px;
+    /*background-color: #0a6ebd;*/
 }
 #parentDiv {
     width: 1000px;
     height: 600px;
-    border: 1px solid #333;
+    /*border: 1px solid #333;*/
     position: relative;
     padding: 10px;
     /*margin: auto;*/
 }
 #setColor{
     width: 30px;
+}
+.movementHolder{
+    display: grid;
+    width: 120px;
+    height: 119px;
 }
 .childDiv {
     width: 35px;
@@ -64,19 +81,37 @@
 .controls input {
     margin-right: 10px;
 }
-.circleSelected{
-    background-color: #000000;
+/*.circleSelected{
+    background-color: #999900;
+}*/
+
+.set_text_holdercontainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 20px;
 }
 
-.set_text_holder{
-    display: block;
-    width: 150px;
+.set_text_holder {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.set_text_holder .close_set_text {
     position: absolute;
-    height: auto;
-    margin: 5px;
-    padding: 5px;
-    background-color: #990000;
-    z-index: 999;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    color: red;
+    font-weight: bold;
 }
 .set_text_display{
     display: flex;
@@ -85,14 +120,29 @@
 .close_set_text{
     color: #fff;
 }
+.seatText{
+    text-align: center;
+    line-height: 12px;
+    font-size: 12px;
+    overflow: visible;
+}
+.seatNumber{
+    position: absolute;
+    top: 0px;
+    left: 10px;
+    z-index: 10;
+    color: #fff;
+}
 
 .enable_single_seat_selection,
+.circleSelected,
 .enable_set_text,
 .enable_drag_drop,
 .enable_resize_selected,
 .enable_clear_selected,
 .enable_set_multiselect,
 .enable_set_seat,
+.enable_set_shape,
 .setSeatNumberSelected,
 .enable_erase_seat,
 .enable_set_seat_number{
@@ -146,7 +196,9 @@
     left: 20px;
 }
 .movementInPx{
-    margin-left: 85px;
+    margin-left: 0;
+    width: 110px;
+    height: 30px;
 }
 
 .controls input[type="text"],
@@ -178,13 +230,14 @@
     transition: background-color 0.3s ease;
 }
 .setPriceColorHolder{
-    display: flex;
-    width: 100%;
+    display: block;
+    width: 120px;
     gap: 10px;
 }
 .colorPriceHolder{
-    width: 50%;
-    display: flex
+    width: 110px;
+    display: grid;
+    margin-bottom: 20px;
 }
 
 
@@ -207,12 +260,14 @@
 }
 
 #applyChanges,
+#make_circle,
 #applyColorChanges,
 #set_seat_number,
 #enable_resize,
 #enable_drag_drop,
 #set_multiselect,
 #set_seat,
+#set_shape,
 #clearAll,
 #savePlan {
     font-weight: bold;
@@ -221,15 +276,29 @@
 #applyChanges, #applyColorChanges {
     background-color: #817a7a;
     color: #fff;
+    width: 110px
+}
+
+#setPrice,
+#seat_number_prefix,
+#seat_number_count {
+    width: 110px;
 }
 
 #applyChanges, #applyColorChanges:hover {
     background-color: #218838;
+    width: 110px
 }
 
 #clearAll {
     background-color: #dc3545;
     color: #fff;
+    height: 30px;
+    width: 110px;
+    margin: 1px 0px 10px 0px;
+    border: 1px solid #666666;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 #clearAll:hover {
@@ -239,6 +308,12 @@
 #savePlan {
     background-color: #37a8db;
     color: #fff;
+    height: 50px;
+    width: 110px;
+    margin-bottom: 20px;
+    border: 1px solid #666666;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 #savePlan:hover {
@@ -247,8 +322,9 @@
 
 #enable_resize,
 #enable_drag_drop,
-#set_seat_number,
+#make_circle,
 #set_seat,
+#set_shape,
 #set_multiselect {
     /*background-color: #17a2b8;*/
     border: 1px solid #d3cccc;
@@ -260,9 +336,24 @@
 #rotateDone:hover,
 #set_single_select:hover,
 #enable_drag_drop:hover,
-#set_seat_number:hover,
+#make_circle:hover,
 #set_multiselect:hover {
     background-color: #138496;
     color: #fff;
+}
+
+.tooltip {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    display: none;
+    white-space: nowrap;
+    z-index: 999;
 }
 
