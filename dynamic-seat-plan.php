@@ -59,9 +59,19 @@ class CustomPostAjaxMetaSave {
 
     public function render_meta_box($post) {
         wp_nonce_field('save_custom_meta', 'custom_meta_nonce');
-        $plan_seats = unserialize( get_post_meta($post->ID, '_custom_field_1', true ) );
+        $plan_data =  get_post_meta($post->ID, '_custom_field_1', true ) ;
+        $plan_seats = isset( $plan_data['seat_data'] ) ? $plan_data['seat_data'] : array();
+        $plan_seat_texts = isset( $plan_data['seat_text_data'] ) ? $plan_data['seat_text_data'] : array();
+//        error_log( print_r( [ '$plan_seat_texts' => $plan_seat_texts ], true ) );
+        $seatIcon = isset( $plan_data['seatIcon'] ) ? $plan_data['seatIcon'] : 'noicon';
+        if( $seatIcon === 'noicon' || $seatIcon === 'seatnull' ){
+            $icon_url = '';
+        }else{
+            $icon_url = SEAT_Plan_ASSETS."images/icons/".$seatIcon.".png";
+        }
         ?>
         <h1>Make Seat Plan</h1>
+
         <div class="controls" id="<?php echo esc_attr( $post->ID )?>">
 <!--            <input type="text" id="plan-name" placeholder="Plan Name">-->
             <input type="hidden" id="plan_id" name="plan_id" value="<?php echo esc_attr( $post->ID );?>">
@@ -74,8 +84,10 @@ class CustomPostAjaxMetaSave {
                 <button class="make_circle" id="enable_resize" style="display: none">Resize</button>
                 <button class="drag_drop" id="enable_drag_drop" style="display: none">Drag & Drop</button>
                 <button class="removeSelected" id="removeSelected">Erase</button>
-                <button class="setText" id="setText">Set Text</button>
+                <button id="setTextnew" class="setTextnew">Set Text</button>
+<!--                <button class="setText" id="setText">Set Text</button>-->
                 <button class="make_circle" id="make_circle" style="display: none">Make circle</button>
+
             </div>
 
             <div class="rotateControls" style="display: none">
@@ -111,7 +123,39 @@ class CustomPostAjaxMetaSave {
             }
         }
 
-        echo '<div class="parentDiv" id="parentDiv" style="position: relative; width: ' . ($columns * ($childWidth + $gap) - $gap) . 'px; height: ' . ($rows * ($childHeight + $gap) - $gap) . 'px;">';
+        echo '<div class="parentDiv" id="parentDiv" style="position: relative; width: ' . ($columns * ($childWidth + $gap) - $gap) . 'px; height: ' . ($rows * ($childHeight + $gap) - $gap) . 'px;"><div id="popupContainer" class="popup">
+            <div class="popupContent">
+                <span id="closePopup" class="close">&times;</span>
+                <div id="popupInnerContent"></div>
+            </div>
+        </div>';
+        if( is_array( $plan_seat_texts ) && count( $plan_seat_texts ) > 0 ){
+            foreach ( $plan_seat_texts as $plan_seat_text ) {
+                $text_rotate_deg = isset( $plan_seat_text['textRotateDeg'] ) ? $plan_seat_text['textRotateDeg'] : 0;
+                echo '<div class="text-wrapper" data-text-degree="'.$text_rotate_deg.'"
+                style="
+                position: absolute; 
+                left: '.$plan_seat_text['textLeft'].'px; 
+                top: '.$plan_seat_text['textTop'].'px; 
+                transform: rotate('.$text_rotate_deg.'deg);">
+                <button class="zoom-in" style="margin-left: 0px">+</button>
+                <button class="zoom-out" style="margin-left: 2px">-</button>
+                <button class="remove-text" style="margin-left: 2px">X</button>
+                <button class="set-color" style="margin-left: 2px">Color</button>
+                <button class="setRotateBtn" style="margin-left: 2px">Rotate</button>
+                 <span class="dynamic-text" 
+                    style="
+                        display: block; 
+                        color: '.$plan_seat_text['color'].'; 
+                        font-size: '. $plan_seat_text['fontSize'].';
+                        cursor: pointer;">
+                   '.$plan_seat_text['text'].'
+                </span>
+            </div>';
+            }
+        }
+
+
         foreach ( $seats as $seat ) {
             $isSelected = false;
             $row = $seat['row'];
@@ -129,6 +173,7 @@ class CustomPostAjaxMetaSave {
             $width = $childWidth;
             $height = $childHeight;
             $degree = 0;
+            $background_img_url = '';
             if( is_array( $plan_seats ) && count( $plan_seats ) > 0 ) {
                 foreach ($plan_seats as $plan_seat) {
                     if ($plan_seat['col'] == $row && $plan_seat['row'] == $col) {
@@ -142,7 +187,8 @@ class CustomPostAjaxMetaSave {
                         $to = (int)$plan_seat['top'];
                         $le = (int)$plan_seat['left'];
                         $degree = (int)$plan_seat['data_degree'];
-                        $seatText = $plan_seat['seatText'];
+                        $seatText = isset( $plan_seat['seatText'] ) ? $plan_seat['seatText'] : '';
+                        $background_img_url = $icon_url;
                         break;
                     }
                 }
@@ -189,6 +235,7 @@ class CustomPostAjaxMetaSave {
               width: ' . $wi . 'px;
               height: ' . $hi . 'px;
               background-color: '.$color.';
+              background-image:url('.$background_img_url.');
               z-index: '.$zindex.';
               transform: rotate('.$degree.'deg);
               ">
@@ -200,8 +247,15 @@ class CustomPostAjaxMetaSave {
         echo '</div> 
             </div>
             <div class="seatActionControl">
+                <div class="seatIconHolder">
+                    <img class="seatIcon" id="icon2" src="'.SEAT_Plan_ASSETS.'images/icons/icon2.png"/>
+                    <img class="seatIcon" id="seat1" src="'.SEAT_Plan_ASSETS.'images/icons/seat1.png"/>
+                    <img alt="No" class="seatIcon" id="seatnull" src=""/>
+                </div>
                 <button id="clearAll"> All Clear</button>
                 <button id="savePlan">Save Plan</button>
+                <button id="setTextPlan" class="setTextPlan" style="display: none">Set text</button>
+                <!--<div class="seatTextControl" id="seatTextControl"></div>-->
                 <div class="setPriceColorHolder" id="setPriceColorHolder" style="display: none">
                     <div class="movementHolder" id="movementHolder">
                         <div class="movementControl">
@@ -267,8 +321,17 @@ class CustomPostAjaxMetaSave {
             wp_send_json_error(['message' => 'Permission denied.']);
         }
 
-        $custom_field_1 = serialize($_POST['custom_field_1']);
-        update_post_meta($post_id, '_custom_field_1', $custom_field_1);
+        error_log( print_r( [ '$_POST' => $_POST ], true ) );
+        $custom_field_1 = $_POST['custom_field_1'];
+        $seat_plan_texts= isset( $_POST['seatPlanTexts'] ) ? $_POST['seatPlanTexts'] : '' ;
+        $seatIcon = isset( $_POST['seatIcon'] ) ? $_POST['seatIcon'] : 'noicon';
+        $seat_plan_data = array(
+                'seat_data' => $custom_field_1,
+                'seat_text_data' => $seat_plan_texts,
+                'seatIcon' => $seatIcon,
+        );
+//        error_log( print_r( [ '$seat_plan_data' => $seat_plan_data ], true ) );
+        update_post_meta($post_id, '_custom_field_1', $seat_plan_data);
 
         wp_send_json_success(['message' => 'Meta data saved successfully.']);
     }
@@ -286,9 +349,17 @@ class CustomPostAjaxMetaSave {
             wp_enqueue_style('seat-plan-css', SEAT_Plan_ASSETS . 'css/seat-plan.css', [], SEAT_Plan_VERSION );
             wp_enqueue_script('view_seat_info', SEAT_Plan_ASSETS . 'js/view_seat_info.js',  ['jquery'], SEAT_Plan_VERSION );
             $post_id = get_the_ID();
-            $plan_seats = unserialize(get_post_meta($post_id, '_custom_field_1', true));
+            $plan_data = get_post_meta($post_id, '_custom_field_1', true);
+            $plan_seats = isset( $plan_data['seat_data'] ) ? $plan_data['seat_data'] : array();
+            $plan_seat_texts = isset( $plan_data['seat_text_data'] ) ? $plan_data['seat_text_data'] : array();
+            $seatIcon = isset( $plan_data['seatIcon'] ) ? $plan_data['seatIcon'] : 'noicon';
+            if( $seatIcon === 'noicon' || $seatIcon === 'seatnull' ){
+                $icon_url = '';
+            }else{
+                $icon_url = SEAT_Plan_ASSETS."images/icons/".$seatIcon.".png";
+            }
 
-            error_log( print_r( [ '$plan_seats' => $plan_seats ], true ) );
+//            error_log( print_r( [ '$icon_url' => $icon_url ], true ) );
             if (!empty($plan_seats) && is_array( $plan_seats )) {
                 $leastLeft = PHP_INT_MAX;
                 $leastTop = PHP_INT_MAX;
@@ -312,12 +383,35 @@ class CustomPostAjaxMetaSave {
                                         <strong>Seat Info:</strong> <span id="info"></span>
                                     </div>
                                     <div id="seat-grid"><div class="boxHolder">';
-
+                if( is_array( $plan_seat_texts ) && count( $plan_seat_texts ) > 0 ) {
+                    foreach ($plan_seat_texts as $plan_seat_text) {
+//                    error_log( print_r( [ '$plan_seat_text' => $plan_seat_text ], true ) );
+                        $text_rotate_deg = isset($plan_seat_text['textRotateDeg']) ? $plan_seat_text['textRotateDeg'] : 0;
+                        $custom_content .= '
+                    <div class="text-wrapper" data-text-degree=' . $text_rotate_deg . '
+                        style="
+                        position: absolute; 
+                        left: ' . ((int)$plan_seat_text['textLeft'] - $leastLeft) . 'px; 
+                        top: ' . ((int)$plan_seat_text['textTop'] - $leastTop) . 'px; 
+                        transform: rotate(' . $text_rotate_deg . 'deg);
+                        ">
+                        <span class="dynamic-text" 
+                            style="
+                                display: inline-block; 
+                                color: ' . $plan_seat_text['color'] . '; 
+                                font-size: ' . $plan_seat_text['fontSize'] . ';
+                                cursor: pointer;">
+                           ' . $plan_seat_text['text'] . '
+                        </span>
+                    </div>';
+                    }
+                }
                 foreach ($plan_seats as $seat) {
                     if (isset($seat["left"])) {
                         $width = isset($seat['width']) ? (int)$seat['width'] : 0;
                         $height = isset($seat['height']) ? (int)$seat['height'] : 0;
                         $uniqueId = "seat-{$seat['id']}"; // Unique ID for each seat
+                        $border_radius = isset( $seat['border_radius'] ) ? $seat['border_radius'] : '';
 
                         $custom_content .= '<div class="box" 
                         id="' . esc_attr($uniqueId) . '" 
@@ -328,16 +422,17 @@ class CustomPostAjaxMetaSave {
                             height: ' . $height . 'px;
                             left: ' . ((int)$seat['left'] - $leastLeft) . 'px;
                             top: ' . ((int)$seat['top'] - $leastTop) . 'px;
-                            border-radius: ' . $seat['border_radius'] . ';
+                            border-radius: ' .$border_radius. ';
                             transform: rotate('.(int)$seat['data_degree'].'deg);"
                         title="Price: $' . esc_attr($seat['price']) . '">
                         <div class="boxChild" 
                             style="
                                 background-color: ' . esc_attr($seat['color']) . ';
+                                background-image: url('.$icon_url.');
                                 width: ' . ($width - 0) . 'px;
                                 height: ' . ($height - 0) . 'px;">
                             <span class="seat_number">' . esc_html($seat['seat_number'] ?? '') . '</span>
-                            <div class="seatText" id="seatText'.$uniqueId.'">'.esc_attr($seat['seatText']).'</div>
+                            <div class="seatText" id="seatText'.$uniqueId.'">'.esc_attr(isset( $seat['seatText'] ) ? $seat['seatText'] : '').'</div>
                         </div>
                     </div>';
                     }
@@ -356,7 +451,8 @@ class CustomPostAjaxMetaSave {
         wp_enqueue_script('view_seat_info', SEAT_Plan_ASSETS . 'js/view_seat_info.js', ['jquery'], SEAT_Plan_VERSION);
 
         $post_id = get_the_ID();
-        $plan_seats = maybe_unserialize(get_post_meta($post_id, '_custom_field_1', true));
+        $plan_data = maybe_unserialize(get_post_meta($post_id, '_custom_field_1', true));
+        $plan_seats = isset( $plan_data['seat_data'] ) ? $plan_data['seat_data'] : array();
 //        error_log( print_r( [ '$plan_seats' => $plan_seats ], true ) );
 
         if (!empty($plan_seats) && is_array($plan_seats)) {
