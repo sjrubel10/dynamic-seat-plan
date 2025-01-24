@@ -18,10 +18,8 @@
     /*background-color: #0a6ebd;*/
 }
 #parentDiv {
-    width: 1000px;
-    height: 600px;
-    /*border: 1px solid #333;*/
-    position: relative;
+    border: 1px solid #e9e4e4;
+    position: absolute;
     padding: 10px;
     /*margin: auto;*/
 }
@@ -44,11 +42,9 @@
     user-select: none;
     font-size: 13px;
     cursor: pointer;
-    /*background-image: url('../images/icon/icon1.png'); !* Fixed path *!*/
-
-    background-size: cover; /* Ensures the image covers the element */
-    background-repeat: no-repeat; /* Prevents tiling */
-    background-position: center; /* Centers the image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 /*.selection-box{
     border: 1px dotted #000000;
@@ -57,11 +53,10 @@
     /*border: 1px solid #000000;*/
     /*border: 2px dotted #000000;*/
     border: 2px dashed #000000;
-    background-color: lightcoral;
 }
-/*.save{
-    border: 1px solid #c1bdbd;
-}*/
+.selectedShape{
+    border: 2px dashed #0e0101;
+}
 .controls {
     margin-bottom: 10px;
 }
@@ -173,6 +168,7 @@
 .enable_set_shape,
 .setSeatNumberSelected,
 .enable_erase_seat,
+.shapeTextSelected,
 .enable_set_seat_number{
     background-color: #cf933d;
     color: #fff;
@@ -268,7 +264,13 @@
     margin-bottom: 20px;
 }
 
-
+.setShapeTitle{
+    display: block;
+    float: left;
+    width: 100%;
+    font-size: 14px;
+    font-weight: 600;
+}
 
 .controls .setSeatNumber {
     width: 100%;
@@ -417,6 +419,72 @@
 .iconSelected{
     background-color: #61abe5;
 }
+
+.dynamicShape {
+    position: absolute;
+    z-index: 30;
+    cursor: move;
+    /*border: 1px solid #000; !* Optional: for visibility *!*/
+}
+.dynamicShapeHolder{
+    display: none;
+    width: 120px;
+    float: left;
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 11px;
+}
+.shapeRotationHolder{
+    display: flex;
+}
+.textControl, .textRotationHolder{
+    display: flex;
+    width: 120px;
+}
+.shapeRotate, .textRotate{
+    padding: 3px;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+#shapeRotateLeft{
+    margin-top: 3px;
+    width: 20px;
+    height: 20px;
+}
+.setShapeColor{
+    width: 28px;
+}
+.shapeText{
+    display: block;
+    float: left;
+    position: relative;
+    margin: 2px;
+    padding: 2px 3px;
+    border: 1px solid #6666;
+    cursor: pointer;
+    border-radius: 2px;
+}
+.shapeIcon{
+    width: 20px;
+    height: 17px;
+}
+
+#uploadSection {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 20px;
+}
+#iconUpload {
+    margin: 10px 0;
+}
+#previewImage {
+    margin-top: 15px;
+    max-width: 200px;
+    display: none;
+}
 /* Popup content box */
 .popupContent {
     position: relative;
@@ -466,14 +534,18 @@ button.zoom-in:hover, button.zoom-out:hover {
     z-index: 50;
 }
 
+.textSelected{
+    border: 2px dashed #0a0a0a;
+}
+
 .zoom-in, .zoom-out, .setRotateBtn {
-    display: none;
+    display: block;
     margin-left: 4px;
     padding-block: 1px;
     padding-inline: 3px
 }
-.remove-text{
-    display: none;
+.remove-text, .removeShape{
+    display: block;
     margin-left: 4px;
     background-color: red;
     color: white;
@@ -482,8 +554,41 @@ button.zoom-in:hover, button.zoom-out:hover {
     padding: 1px 3px;
     cursor: pointer;
 }
-.set-color{
-    display: none;
+
+.dynamicTextControlHolder{
+    margin: 10px 0px;
+}
+.dynamicShapeControl{
+    display: block;
+    width: 120px;
+}
+.colorRemoveHolder{
+    display: flex;
+    width: calc(100% - 10px);
+    padding: 10px 10px 5px 0px;
+}
+#setShapeColor{
+    width: 30px;
+}
+.dynamicShapeControlText{
+    display: block;
+    float: left;
+    position: relative;
+    width: 100%;
+}
+.removeDynamicShape{
+    display: block;
+    margin-left: 4px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 1px 5px;
+    height: 27px;
+    cursor: pointer;
+}
+.set-color, .setShapeColor{
+    display: block;
     margin-left: 4px;
     background-color: blue;
     color: white;
@@ -493,4 +598,90 @@ button.zoom-in:hover, button.zoom-out:hover {
     cursor: pointer;
 }
 
+.setTextColor {
+    display: block;
+    margin-left: 4px;
+    background-color: blue;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 1px 3px;
+    cursor: pointer;
+}
+
+.dynamicTextControlContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    width: max-content;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.textControl {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.textControl button {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.textControl button:hover {
+    background-color: #2980b9;
+}
+
+.textControl .remove-text {
+    background-color: #e74c3c;
+}
+
+.textControl .remove-text:hover {
+    background-color: #c0392b;
+}
+
+.textControl input[type="color"] {
+    border: none;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.textRotationHolder {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.textRotationHolder img {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.textRotationHolder img:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
 

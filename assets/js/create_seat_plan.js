@@ -1,4 +1,38 @@
 jQuery(document).ready(function ($) {
+
+    $('#uploadButton').on('click', function ( e ) {
+        e.preventDefault();
+        let fileInput = $('#iconUpload')[0].files[0];
+        if (!fileInput) {
+            alert('Please select a file to upload.');
+            return;
+        }
+
+        let formData = new FormData();
+        formData.append('icon', fileInput);
+
+        $.ajax({
+            url: ajax_object.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'upload_icon',
+                nonce: ajax_object.nonce,
+                formData: formData
+            },
+            success: function (response) {
+                if (response.success) {
+                    alert(response.data.message);
+                    $('#previewImage').attr('src', response.data.url).show();
+                } else {
+                    alert(response.data.message);
+                }
+            },
+            error: function () {
+                alert('An error occurred while uploading the icon.');
+            },
+        });
+    });
+
     $(document).on('click', '#enable_resize', function ( e ) {
         e.preventDefault();
         $(this).toggleClass('enable_resize_selected');
@@ -24,9 +58,9 @@ jQuery(document).ready(function ($) {
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
             $('body').removeClass('lasso-cursor');
-            if( !$(this).hasClass('enable_set_shape' ) ){
-                $("#make_circle").fadeOut();
-            }
+            isSetTextMode = false;
+            $('#dynamicShapeHolder').fadeOut();
+
         }
     });
     $(document).on('click', '#set_shape', function (e) {
@@ -40,8 +74,11 @@ jQuery(document).ready(function ($) {
             $('#setTextnew').removeClass('enable_set_text');
             $('body').removeClass('lasso-cursor');
             $("#make_circle").fadeIn();
+            isSetTextMode = false;
+            $('#dynamicShapeHolder').fadeIn();
         }else{
             $("#make_circle").fadeOut();
+            $('#dynamicShapeHolder').fadeOut();
         }
     });
     // let isLassoEnabled = false;
@@ -61,9 +98,8 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
-            if( !$(this).hasClass('enable_set_shape' ) ){
-                $("#make_circle").fadeOut();
-            }
+            $('#dynamicShapeHolder').fadeOut();
+            isSetTextMode = false;
             $('body').addClass('lasso-cursor');
         }else{
             $('body').removeClass('lasso-cursor');
@@ -79,10 +115,9 @@ jQuery(document).ready(function ($) {
             $('#set_multiselect').removeClass('enable_set_multiselect');
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
-            if( !$(this).hasClass('enable_set_shape' ) ){
-                $("#make_circle").fadeOut();
-            }
+            $('#dynamicShapeHolder').fadeOut();
             $("#make_circle").fadeIn();
+            isSetTextMode = false;
         }else{
             $("#make_circle").fadeOut();
         }
@@ -97,11 +132,10 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#setTextnew').removeClass('enable_set_text');
             $('#set_shape').removeClass('enable_set_shape');
-            if( !$(this).hasClass('enable_set_shape' ) ){
-                $("#make_circle").fadeOut();
-            }
+            $('#dynamicShapeHolder').fadeOut();
             $('body').removeClass('lasso-cursor');
 
+            isSetTextMode = false;
             selectedDivs = [];
             selectedDraggableDivs = [];
             selectedSeatsDivs = [];
@@ -127,19 +161,27 @@ jQuery(document).ready(function ($) {
             seatIconName = $(this).attr('id');
             imageUrl = $(this).attr('src');
             // console.log( seatIconSrc );
-            $('.childDiv.save').each(function () {
+            $('.childDiv.save.selected').each(function () {
                 $(this).css({
                     'background-image': `url(${imageUrl})`,
+                    'background-color': '',
                     'background-size': 'cover', // Ensure the image covers the div
                     'background-position': 'center', // Center the image
                     'background-repeat': 'no-repeat' // Prevent repeating
                 });
+                if( seatIconName === 'seatnull' ){
+                    seatIconName = '';
+                }
+                $(this).attr('data-background-image', seatIconName);
             });
         }else{
             seatIconName = '';
             imageUrl = '';
         }
     });
+
+    let parentWidth = $(".seatPlanHolder").css('width');
+    // $("#parentDiv").css({ width: parentWidth});
 
     $(document).on('click', '.movement', function (e) {
         e.preventDefault();
@@ -205,6 +247,7 @@ jQuery(document).ready(function ($) {
             $('#set_multiselect').removeClass('enable_set_multiselect');
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#set_shape').removeClass('enable_set_shape');
+            $('#dynamicShapeHolder').fadeOut();
         }else{
             isSetTextMode = false;
         }
@@ -253,6 +296,9 @@ jQuery(document).ready(function ($) {
         selectedDraggableDivs = [];
         selectedSeatsDivs = [];
 
+        $('.dynamicShape, .text-wrapper').each( function () {
+            $(this).remove();
+        });
 
 
         let previousPosition = 0;
@@ -269,9 +315,16 @@ jQuery(document).ready(function ($) {
         selectionOrder = [];
 
     });
+    function hide_remove_shape_text_sellection(){
+        $("#parentDiv").find('.text-wrapper').removeClass('textSelected');
+        $("#parentDiv").find('.dynamicShape').removeClass('selectedShape');
+        $(".dynamicShapeColorHolder").hide();
+        $(".dynamicTextControlHolder").hide();
+    }
     // Handle selection
     let seat_num = 0;
     $(".childDiv").on("click", function (e) {
+        hide_remove_shape_text_sellection();
         // e.stopPropagation();
         e.preventDefault();
         const $this = $(this);
@@ -324,20 +377,6 @@ jQuery(document).ready(function ($) {
             // alert('seat add');
         }
 
-        if( $('#set_shape').hasClass('enable_set_shape' ) && !$this.hasClass('save') ){
-            // alert('shape add');
-            let color = $('#setColor').val();
-            $this.addClass("save");
-            $this.css({
-                'background-color' : color,
-            });
-            if ($('#make_circle').hasClass('circleSelected')) {
-                $(this).css('border-radius', '50%');
-            }
-        }
-
-
-
         if ($this.hasClass("selected")) {
 
             $this.css({
@@ -370,7 +409,6 @@ jQuery(document).ready(function ($) {
                         },
                         stop: debounce(function () {
                             console.log('Resize operation stopped.');
-                            // Add your stop event logic here
                         }, 300)
                     });
                 }
@@ -389,7 +427,6 @@ jQuery(document).ready(function ($) {
                         const offsetY = ui.position.top - current.position().top;
                         isMultiSelecting = false;
                         isDragging = true;
-                        // console.log( selectedDraggableDivs.length );
                         if( isDragging ) {
                             if (selectedDraggableDivs.length > 0) {
                                 selectedDraggableDivs.forEach(div => {
@@ -459,7 +496,6 @@ jQuery(document).ready(function ($) {
         }else{
             $('#setPriceColorHolder').fadeOut();
         }
-        // console.log( rotate_id, leftPosition, rotationData );
 
     });
 
@@ -512,11 +548,7 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         let selectedColor = $("#setTextColor").val(); // Get the selected color value
         let colorChangeId = $(this).attr('id'); // Get the ID of the input
-        console.log( colorChangeId );
         colorChangeId = colorChangeId.replace('color', "");
-
-
-        // Apply the color to the target element
         $('#' + colorChangeId).css('color', selectedColor);
     });
 
@@ -608,9 +640,7 @@ jQuery(document).ready(function ($) {
         }
         if ( !( rotate_id in rotationData)) {
             rotationData[rotate_id] = { angle: 0, position: leftPosition, topPosition: topPosition };
-            // forReverse[rotate_id] = { angle: 0, position: leftPosition, topPosition: topPosition };
         }
-        // console.log( rotationData, selectionOrder );
     }
 
     let distance = 10;
@@ -662,7 +692,6 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         selectionOrder.forEach((id, index) => {
             const movement = (index) * distance ;
-            // console.log( id );
             rotationData[id].angle += distance;
             if( getOption === 'top-to-bottom' ){
                 rotationData[id].position -= movement;
@@ -715,6 +744,7 @@ jQuery(document).ready(function ($) {
 
     });
 
+
     $("#applyChanges").on("click", function (e) {
         e.preventDefault();
         let setPriceTotal = selectedDivs.length;
@@ -724,7 +754,6 @@ jQuery(document).ready(function ($) {
             selectedDivs.forEach(div => {
                 if( div.hasClass('selected')){
                     div.addClass("save").removeClass('selected');
-                    // if (color) div.css("background-color", color);
                     if (price){
                         div.attr("data-price", price)/*.text(price)*/;
                         const tooltip = div.find('.tooltip');
@@ -741,8 +770,6 @@ jQuery(document).ready(function ($) {
         }else{
             alert('Please select any seat!');
         }
-
-
     });
 
     $('#savePlan').on('click', function (e) {
@@ -754,14 +781,13 @@ jQuery(document).ready(function ($) {
         }*/
         var seatPlanTexts = [];
         var selectedSeats = [];
-        // console.log( seatIconName );
+        var dynamicShapes = [];
         $('.childDiv.save').each(function () {
             if ( $(this).css('background-color') !== 'rgb(255, 255, 255)') { // Not default white
                 const id = $(this).data('id');
-                const className = $(this).attr('class');
-                // console.log( className );
                 const row = $(this).data('row');
                 const col = $(this).data('col');
+                const backgroundImage = $(this).data('background-image');
                 const seat_number = $(this).data('seat-num');
                 const data_degree = $(this).data('degree');
                 const color = $(this).css('background-color');
@@ -774,8 +800,7 @@ jQuery(document).ready(function ($) {
                 const border_radius = $(this).css('border-radius') || 0;
                 const seatText = $(this).find('.seatText').text();
 
-                // console.log( seatText );
-                selectedSeats.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText });
+                selectedSeats.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText, backgroundImage });
             }
         });
 
@@ -788,6 +813,17 @@ jQuery(document).ready(function ($) {
             const text = $(this).children('.dynamic-text').text() || '';
             const textRotateDeg = $(this).data('text-degree') || 0;
             seatPlanTexts.push({ text, class_name, textLeft, textTop, color, fontSize, textRotateDeg});
+        });
+        $('.dynamicShape').each(function () {
+            const textLeft = parseInt($(this).css('left')) || 0;
+            const textTop = parseInt($(this).css('top')) || 0;
+            const width = parseInt($(this).css('width')) || 0;
+            const height = parseInt($(this).css('height')) || 0;
+            const backgroundColor = $(this).css('background-color') || '';
+            const borderRadius = $(this).css('border-radius') || '';
+            const clipPath = $(this).css('clip-path') || '';
+            const shapeRotateDeg = $(this).data('shape-rotate') || 0;
+            dynamicShapes.push({ textLeft, textTop, width, height,  backgroundColor, borderRadius, clipPath, shapeRotateDeg});
         });
 
         if ( selectedSeats.length === 0 ) {
@@ -809,7 +845,6 @@ jQuery(document).ready(function ($) {
                 console.error(error);
             }
         });*/
-        console.log( seatPlanTexts );
         $.ajax({
             url: ajax_object.ajax_url,
             type: 'POST',
@@ -820,6 +855,7 @@ jQuery(document).ready(function ($) {
                 custom_field_1: selectedSeats,
                 seatPlanTexts: seatPlanTexts,
                 seatIcon: seatIconName,
+                dynamicShapes: dynamicShapes,
             },
             success: function (response) {
                 if (response.success) {
@@ -869,8 +905,6 @@ jQuery(document).ready(function ($) {
             return;
         }
         // selectedSeats.sort((a, b) => a.col - b.col);
-        // console.log( selectedSeats, ajax_object );
-        // console.log( ajax_object );
 
 
         /*$.ajax({
@@ -1010,8 +1044,6 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
 
         if (isMultiSelecting) {
-            console.log( isDragging );
-            // isDragging = false;
             $('.childDiv.save.dotted').each(function () {
                 const $this = $(this);
                 make_rotate( $(this).attr('id') );
@@ -1085,7 +1117,7 @@ jQuery(document).ready(function ($) {
 
                 $('.childDiv').each(function () {
 
-                    if(!$(this).hasClass('save' )){
+                    if(!$(this).hasClass('save' ) && addEnableSeat){
                         const $box = $(this);
                         const boxOffset = $box.offset();
                         const boxPosition = {
@@ -1161,262 +1193,366 @@ jQuery(document).ready(function ($) {
 
     //End
 
-    $('.text-wrapper').hover(
-        function () {
-            // On mouse enter
-            $(this).children('.zoom-in, .zoom-out, .remove-text, .set-color, .setRotateBtn').fadeIn();
-        },
-        function () {
-            // On mouse leave
-            $(this).children('.zoom-in, .zoom-out, .remove-text, .set-color, .setRotateBtn').fadeOut();
-        }
-    );
-    $('.zoom-in').click(function (e) {
-        e.preventDefault();
-        e.stopPropagation(); // Prevent triggering parent click
-
-        // Correctly target the sibling element with the 'dynamic-text' class
-        const dynamicText = $(this).siblings('.dynamic-text');
-        const currentSize = parseInt(dynamicText.css('font-size'));
-
-        if (!isNaN(currentSize)) {
-            dynamicText.css('font-size', currentSize + 2 + 'px');
-        }
-    });
-    $('.zoom-out').click(function (e) {
-        e.preventDefault();
-        e.stopPropagation(); // Prevent triggering parent click
-
-        // Correctly target the sibling element with the 'dynamic-text' class
-        const dynamicText = $(this).siblings('.dynamic-text');
-        const currentSize = parseInt(dynamicText.css('font-size'));
-
-        if (!isNaN(currentSize)) {
-            dynamicText.css('font-size', currentSize - 2 + 'px');
-        }
-    });
-    // Remove text when clicking the remove button
-    $('.remove-text').click(function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).parent().remove();
-        // dynamicText.remove(); // Remove the text and buttons
+    let selectShape = 'rectangle';
+    $(document).on('click','.shapeText',function (e) {
+        $(this).siblings().removeClass('shapeTextSelected')
+        $(this).toggleClass('shapeTextSelected')
+        selectShape = $(this).attr('id');
     });
 
-    let rotateCount = 0;
-    $('.setRotateBtn').click(function (e) {
-        rotateCount += 10;
-        $(this).parent('.text-wrapper').css("transform", `rotate(${rotateCount}deg)`);
-        $(this).parent('.text-wrapper').attr('data-text-degree', rotateCount);
-    });
-
-   /* $('.set-color').click(function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const newColor = prompt("Enter a color (e.g., 'red', '#ff0000'):", "red");
-        const dynamicText = $(this).siblings('.dynamic-text');
-        if (newColor) {
-            dynamicText.css("color", newColor); // Apply the new color
-        }
-    });*/
-
-    $('.set-color').click(function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const colorInput = $('<input>', {
-            type: 'color',
-            style: 'position: absolute; right: 0; top: 0; opacity: 0; pointer-events: auto;'
-        }).appendTo('body');
-        const dynamicText = $(this).siblings('.dynamic-text');
-        colorInput.trigger('click');
-        colorInput.on('input', function () {
-            const newColor = $(this).val();
-            if (newColor) {
-                dynamicText.css("color", newColor); // Apply the new color
-            }
-            colorInput.remove();
-        });
-    });
-
-
-    //Set Text plan
-    let previousText = '';
     $(document).on('click','.parentDiv',function (e) {
         e.preventDefault();
-        set_plan_text( e );
-    });
-    function set_plan_text( e ){
-        let rotateText = 0;
         if (isSetTextMode) {
-            const parentOffset = $('.parentDiv').offset();
-            const x = e.pageX - parentOffset.left;
-            const y = e.pageY - parentOffset.top;
-
-            // Add 10px offset to the x and y position to move the input slightly
-            const inputX = x;
-            const inputY = y;
-
-            // Create input field dynamically
-            const input = $('<input type="text" class="dynamic-input">').css({
-                position: 'absolute',
-                left: inputX,
-                top: inputY,
-                transform: 'translate(-50%, -50%)',
-                width: '50px',
-                zIndex: 999, // Ensures the input field is above other elements
-            });
-
-            // Append input field to the parent div
-            $('.parentDiv').append(input);
-
-            // Focus on the input field and handle the blur event
-            input.focus().blur(function () {
-                const text = $(this).val().trim(); // Trim to remove extra spaces
-
-                // If the input has text, create a span with buttons; otherwise, remove the input
-                if (text) {
-                    const textWrapper = $('<div class="text-wrapper" data-text-degree="0"></div>').css({
-                        position: 'absolute',
-                        left: inputX,
-                        top: inputY,
-                        transform: 'translate(-50%, -50%)',
-                    });
-
-                    const textDisplay = $('<span class="dynamic-text"></span>')
-                        .text(text)
-                        .css({
-                            display: 'block',
-                            cursor: 'pointer',
-                        });
-
-                    // Buttons for font size adjustment, remove and color
-                    const zoomInBtn = $('<button class="zoom-in">+</button>');
-                    const zoomOutBtn = $('<button class="zoom-out">-</button>');
-                    const removeBtn = $('<button class="remove-text">X</button>');
-                    const setColorBtn = $('<button class="set-color">Color</button>');
-                    const setRotateBtn = $('<button class="setRotateBtn">Rotate</button>');
-                    $(this).replaceWith(textWrapper);
-                    textWrapper.append(textDisplay, zoomInBtn, zoomOutBtn, removeBtn, setColorBtn, setRotateBtn);
-
-                    textWrapper.hover(
-                        function () {
-                            zoomInBtn.show();
-                            zoomOutBtn.show();
-                            removeBtn.show();
-                            setColorBtn.show();
-                            setRotateBtn.show();
-                        },
-                        function () {
-                            zoomInBtn.hide();
-                            zoomOutBtn.hide();
-                            removeBtn.hide();
-                            setColorBtn.hide();
-                            setRotateBtn.hide();
-                        }
-                    );
-
-                    /*textDisplay.click(function (e) {
-                        e.preventDefault();
-                        previousText = $(this).text();
-                        $('.dynamic-input').remove();
-
-                        const editInput = $('<input type="text" class="dynamic-input">')
-                            .val(previousText)
-                            .css({
-                                position: 'absolute',
-                                left: parseInt(textWrapper.css('left')), // Maintain the position
-                                top: parseInt(textWrapper.css('top')),  // Maintain the position
-                                transform: 'translate(-50%, -50%)',
-                            });
-
-                        textWrapper.replaceWith(editInput);
-
-                        editInput.focus().blur(function () {
-                            const newText = $(this).val().trim();
-                            if (newText) {
-                                textDisplay.text(newText);
-                                $(this).replaceWith(textWrapper);
-                            } else {
-                                // Remove the input field if no text
-                                $(this).remove();
-                            }
-                        });
-                    });*/
-
-                    zoomInBtn.click(function (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const currentSize = parseInt(textDisplay.css('font-size'));
-                        textDisplay.css('font-size', currentSize + 2 + 'px');
-                    });
-
-                    zoomOutBtn.click(function (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const currentSize = parseInt(textDisplay.css('font-size'));
-                        if (currentSize > 6) { // Set a minimum font size limit
-                            textDisplay.css('font-size', currentSize - 2 + 'px');
-                        }
-                    });
-
-                    removeBtn.click(function (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        textWrapper.remove();
-                    });
-                    setColorBtn.click(function (e) {
-                        /*e.preventDefault();
-                        e.stopPropagation();
-                        const newColor = prompt("Enter a color (e.g., 'red', '#ff0000'):", "red");
-                        if (newColor) {
-                            textDisplay.css("color", newColor); // Apply the new color
-                        }*/
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const colorInput = $('<input>', {
-                            type: 'color',
-                            style: 'position: absolute; right: 0; top: 0; opacity: 0; pointer-events: auto;'
-                        }).appendTo('body');
-                        // const dynamicText = $(this).siblings('.dynamic-text');
-                        colorInput.trigger('click');
-                        colorInput.on('input', function () {
-                            const newColor = $(this).val();
-                            if (newColor) {
-                                textDisplay.css("color", newColor); // Apply the new color
-                            }
-                            colorInput.remove();
-                        });
-                    });
-                    let rotateCount = 0;
-                    setRotateBtn.click(function (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        rotateCount += 10;
-                        textWrapper.css("transform", `rotate(${rotateCount}deg)`);
-                        textWrapper.attr('data-text-degree', rotateCount);
-                    });
-                } else {
-                    $(this).remove();
-                }
-            });
+            set_plan_text(e);
         }
+        if( $('#set_shape').hasClass('enable_set_shape' ) ){
+            $("#parentDiv").find('.dynamicShape').removeClass('selectedShape');
+            make_shape( e, selectShape );
+        }
+    });
+
+    $('#setShapeColor').on('input', function ( e ) {
+        e.preventDefault();
+        const color = $("#setShapeColor").val();
+        if (color)  $("#parentDiv").find('.dynamicShape.selectedShape').css("background-color", color);
+    });
+
+    $("#removeDynamicShape").on("click", function (e) {
+        e.preventDefault();
+        const color = $("#setShapeColor").val();
+        if (color)  $("#parentDiv").find('.dynamicShape.selectedShape').remove();
+        $(".dynamicShapeColorHolder").hide();
+    });
+
+    $(document).on("click", ".shapeRotate", function (e) {
+        e.preventDefault();
+        let getShape = $("#parentDiv").find('.dynamicShape.selectedShape');
+        let deg = parseInt(getShape.attr('data-shape-rotate')) || 0;
+        let leftRight = $(this).attr('id'); // ID of the clicked button
+        if (leftRight === 'shapeRotateRight') {
+            deg += 10;
+        } else if (leftRight === 'shapeRotateLeft') {
+            deg -= 10;
+        }
+        getShape.css('transform', `rotate(${deg}deg)`);
+        getShape.attr('data-shape-rotate', deg);
+    });
+
+    $(document).on( 'click', '.zoom-in', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
+        const currentSize = parseInt(dynamicText.css('font-size'));
+
+        if (!isNaN(currentSize)) {
+            dynamicText.css('font-size', currentSize + 1 + 'px');
+        }
+    });
+
+    $(document).on( 'click', '.zoom-out', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
+        const currentSize = parseInt(dynamicText.css('font-size'));
+        if (!isNaN(currentSize)) {
+            dynamicText.css('font-size', currentSize - 1 + 'px');
+        }
+    });
+
+    $(document).on( 'click', '.remove-text', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
+        dynamicText.parent().remove();
+    });
+
+    $(document).on("click", ".textRotate", function (e) {
+        e.preventDefault();
+        let getText =$("#parentDiv").find('.text-wrapper.textSelected');
+        let textDeg = parseInt(getText.attr('data-text-degree')) || 0;
+        let leftRight = $(this).attr('id'); // ID of the clicked button
+        if (leftRight === 'textRotateRight') {
+            textDeg += 10;
+        } else if (leftRight === 'textRotateLeft') {
+            textDeg -= 10;
+        }
+        getText.css('transform', `rotate(${textDeg}deg)`);
+        getText.attr('data-text-degree', textDeg);
+    });
+
+    $('#setTextColor').on('input', function ( e ) {
+        e.preventDefault();
+        const color = $("#setTextColor").val();
+        const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
+        if (color)  dynamicText.css("color", color);
+    });
+    function make_shape(e, shape_type) {
+        const parentOffset = $('.parentDiv').offset();
+        const x = e.pageX - parentOffset.left;
+        const y = e.pageY - parentOffset.top;
+
+        let width = 100;
+        let height = 100;
+        let borderRadius = '0';
+        let shapeStyle = {};
+
+        switch (shape_type) {
+            case 'circle':
+                borderRadius = '50%';
+                break;
+            case 'rectangle':
+                width = 120;
+                height = 80;
+                break;
+            case 'square':
+                width = height = 80;
+                break;
+            case 'triangle':
+                shapeStyle = {
+                    width: '0',
+                    height: '0',
+                    borderLeft: '25px solid transparent',
+                    borderRight: '25px solid transparent',
+                    borderBottom: '50px solid #1e90ff',
+                    backgroundColor: 'transparent',
+                };
+                break;
+            case 'oval':
+                width = 120;
+                height = 80;
+                borderRadius = '50%';
+                break;
+            case 'pentagon':
+                shapeStyle = {
+                    clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+                };
+                break;
+            case 'hexagon':
+                shapeStyle = {
+                    clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                };
+                break;
+            case 'rhombus':
+                shapeStyle = {
+                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                };
+                break;
+            case 'parallelogram':
+                shapeStyle = {
+                    clipPath: 'polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%)',
+                };
+                break;
+            case 'trapezoid':
+                shapeStyle = {
+                    clipPath: 'polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%)',
+                };
+                break;
+            default:
+                console.warn('Invalid shape_type:', shape_type);
+                return;
+        }
+        const shape = $('<div class="dynamicShape" date-shape-rotate="0"></div>').css({
+            left: x + 'px',
+            top: y + 'px',
+            width: width + 'px',
+            height: height + 'px',
+            backgroundColor: '#1e90ff',
+            borderRadius: borderRadius,
+            ...shapeStyle,
+        });
+
+        $('.parentDiv').append(shape);
+        shape.toggleClass('selectedShape');
+        $(".dynamicShapeColorHolder").show();
+
+        shape.draggable({ containment: '.parentDiv' });
+        // if (!['triangle', 'pentagon', 'hexagon', 'rhombus', 'parallelogram', 'trapezoid'].includes(shape_type)) {
+        shape.resizable({
+            containment: '.parentDiv',
+            minHeight: 20,
+            minWidth: 20,
+        });
+        // }
     }
 
-    // Ensure selectedDraggableDivs is defined as an array
+    let isShapeDragging = false;
+    let addEnableSeat = true;
+    $(document).on("click", ".dynamicShape", function (e) {
+        const isAlreadySelected = $(this).hasClass('selectedShape');
+        $("#parentDiv").find('.dynamicShape').removeClass('selectedShape');
+        $("#parentDiv").find('.text-wrapper').removeClass('textSelected');
+        $(".dynamicTextControlHolder").hide();
+        $("#setPriceColorHolder").hide();
+        if (!isAlreadySelected) {
+            $(this).addClass('selectedShape');
+            $(".dynamicShapeColorHolder").show();
+            if (!$(this).data("initialized")) {
+                $(this).resizable({
+                    containment: '.parentDiv',
+                    minHeight: 1,
+                    minWidth: 1,
+                });
+
+                $(this).draggable({
+                    containment: "#parentDiv",
+                    start: function () {
+                        isShapeDragging = true;
+                        addEnableSeat = false;
+                    },
+                    drag: function (event, ui) {
+                        const current = $(this);
+                        const offsetX = ui.position.left - current.position().left;
+                        const offsetY = ui.position.top - current.position().top;
+                        if (isTextDragging) {
+                            $(this).css({
+                                top: current.position().top + offsetY + "px",
+                                left: current.position().left + offsetX + "px",
+                            });
+                        }
+                    },
+                    stop: textDragDebounce(function () {
+                        isDragging = false;
+                        addEnableSeat = true;
+                        console.log("Drag operation stopped.");
+                    }, 300),
+                });
+                $(this).data("initialized", true);
+            }
+        } else {
+            // Hide the color holder if the shape is deselected
+            $(".dynamicShapeColorHolder").hide();
+        }
+    });
+
+
+    function set_plan_text( e ){
+        const parentOffset = $('.parentDiv').offset();
+        const x = e.pageX - parentOffset.left;
+        const y = e.pageY - parentOffset.top;
+        const inputX = x;
+        const inputY = y;
+        const input = $('<input type="text" class="dynamic-input">').css({
+            position: 'absolute',
+            left: inputX,
+            top: inputY,
+            transform: 'translate(-50%, -50%)',
+            width: '50px',
+            zIndex: 999,
+        });
+        $('.parentDiv').append(input);
+        input.focus().blur(function () {
+            const text = $(this).val().trim(); // Trim to remove extra spaces
+            if (text) {
+                $("#parentDiv").find('.text-wrapper').removeClass('textSelected');
+                $(".dynamicTextControlHolder").show();
+                const textWrapper = $('<div class="text-wrapper textSelected" data-text-degree="0"></div>').css({
+                    position: 'absolute',
+                    left: inputX,
+                    top: inputY,
+                    transform: 'translate(-50%, -50%)',
+                });
+
+                const textDisplay = $('<span class="dynamic-text"></span>')
+                    .text(text)
+                    .css({
+                        display: 'block',
+                        cursor: 'pointer',
+                    });
+
+                $(this).replaceWith(textWrapper);
+                textWrapper.append(textDisplay);
+
+                /*textDisplay.click(function (e) {
+                    e.preventDefault();
+                    previousText = $(this).text();
+                    $('.dynamic-input').remove();
+
+                    const editInput = $('<input type="text" class="dynamic-input">')
+                        .val(previousText)
+                        .css({
+                            position: 'absolute',
+                            left: parseInt(textWrapper.css('left')), // Maintain the position
+                            top: parseInt(textWrapper.css('top')),  // Maintain the position
+                            transform: 'translate(-50%, -50%)',
+                        });
+
+                    textWrapper.replaceWith(editInput);
+
+                    editInput.focus().blur(function () {
+                        const newText = $(this).val().trim();
+                        if (newText) {
+                            textDisplay.text(newText);
+                            $(this).replaceWith(textWrapper);
+                        } else {
+                            // Remove the input field if no text
+                            $(this).remove();
+                        }
+                    });
+                });*/
+            } else {
+                $(this).remove();
+            }
+        });
+    }
+
     let isTextDragging = false;
     let selectedTextDraggableDivs = [];
-    $(document).on("click",".text-wrapper", function (e) {
+    $(document).on("click", ".text-wrapper", function (e) {
+        const isAlreadyTextSelected = $(this).hasClass('textSelected');
+        $("#parentDiv").find('.text-wrapper').removeClass('textSelected');
+        $("#parentDiv").find('.dynamicShape').removeClass('selectedShape');
+        $(".dynamicShapeColorHolder").hide();
+        $("#setPriceColorHolder").hide();
+
+        if (!isAlreadyTextSelected) {
+            $(this).addClass('textSelected');
+            $(".dynamicTextControlHolder").show();
+            if (!$(this).data("textInitialized")) {
+                $(this).draggable({
+                    containment: "#parentDiv",
+                    start: function () {
+                        isShapeDragging = true;
+                        addEnableSeat = false;
+                    },
+                    drag: function (event, ui) {
+                        const current = $(this);
+                        const offsetX = ui.position.left - current.position().left;
+                        const offsetY = ui.position.top - current.position().top;
+                        if (isTextDragging) {
+                            $(this).css({
+                                top: current.position().top + offsetY + "px",
+                                left: current.position().left + offsetX + "px",
+                            });
+                        }
+                    },
+                    stop: textDragDebounce(function () {
+                        isDragging = false;
+                        addEnableSeat = true;
+                        console.log("Drag operation stopped.");
+                    }, 300),
+                });
+                $(this).data("textInitialized", true);
+            }
+        } else {
+            // Hide the color holder if the shape is deselected
+            $(".dynamicTextControlHolder").hide();
+        }
+    });
+
+    $(document).on("click",".text-wrapper_old", function (e) {
         e.preventDefault();
         e.stopPropagation();
         const $this = $(this);
 
         // Toggle selection
         if ($this.hasClass("textSelected")) {
+            $(".dynamicTextControlHolder").hide();
             $this.removeClass("textSelected");
             selectedTextDraggableDivs = selectedTextDraggableDivs.filter(
                 (div) => div[0] !== $this[0]
             );
         } else {
+            $(".dynamicTextControlHolder").show();
             $this.addClass("textSelected");
             selectedTextDraggableDivs.push($this);
         }
