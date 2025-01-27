@@ -104,7 +104,6 @@ class CustomPostAjaxMetaSave {
         <div class="controls" id="<?php echo esc_attr( $post->ID )?>">
 <!--            <input type="text" id="plan-name" placeholder="Plan Name">-->
             <input type="hidden" id="plan_id" name="plan_id" value="<?php echo esc_attr( $post->ID );?>">
-
             <div class="planControlHolder">
                 <button class="set_multiselect" id="set_multiselect">Multiselect</button>
                 <button class="set_single_select" id="set_single_select">Single Select</button>
@@ -114,22 +113,6 @@ class CustomPostAjaxMetaSave {
                 <button class="drag_drop" id="enable_drag_drop" style="display: none">Drag & Drop</button>
                 <button class="removeSelected" id="removeSelected">Erase</button>
                 <button id="setTextnew" class="setTextnew">Set Text</button>
-<!--                <button class="setText" id="setText">Set Text</button>-->
-<!--                <button class="make_circle" id="make_circle" style="display: none">Make circle</button>-->
-
-            </div>
-
-            <div class="rotateControls" style="display: block">
-                <select class="rotationHandle" name="rotationHandle" id="rotationHandle">
-                    <option class="options" selected value="top-to-bottom">Top to bottom</option>
-                    <option class="options"  value="bottom-to-top">Bottom to Top</option>
-                    <option class="options"  value="right-to-left">Right to Left</option>
-                    <option class="options"  value="left-to-right">Left to Right</option>
-                </select>
-                <button id="rotateLeft">Rotate Left</button>
-                <button id="rotateRight">Rotate Right</button>
-                <input type="text" name="rotationAngle" id="rotationAngle" value="10" placeholder="10 degree">
-                <button class="rotateDone" id="rotateDone">Done</button>
             </div>
 
         </div>
@@ -319,7 +302,6 @@ class CustomPostAjaxMetaSave {
                 <div class="dynamicShapeHolder" id="dynamicShapeHolder">
                 '.$shapeText.'
                 </div>
-                
                 <div class="dynamicShapeColorHolder" style="display: none">
                     <div class="dynamicShapeControl">
                         <div class="dynamicShapeControlText">Shape Setting</div>
@@ -333,7 +315,6 @@ class CustomPostAjaxMetaSave {
                         </div>
                     </div>
                 </div>
-                
                 <div class="dynamicTextControlHolder" style="display: none">
                     <div class="dynamicTextControlText">Text Setting</div>
                     <div class="dynamicTextControlContainer">
@@ -350,34 +331,45 @@ class CustomPostAjaxMetaSave {
                     </div>
                 </div>
                 
-                <div class="seatIconContainer">
-                    <span class="seatIconTitle">Select seat icon</span>
-                    <div class="seatIconHolder">
-                        <img class="seatIcon" id="icon2" src="'.SEAT_Plan_ASSETS.'images/icons/icon2.png"/>
-                        <img class="seatIcon" id="seat1" src="'.SEAT_Plan_ASSETS.'images/icons/seat1.png"/>
-                        <img alt="No" class="seatIcon" id="seatnull" src=""/>
-                    </div>
-                    <!--<div id="uploadSection">
-                        <input type="file" id="iconUpload" accept="image/png" />
-                        <button type="button" id="uploadButton">Upload Icon</button>
-                        <img id="previewImage" alt="Uploaded Icon Preview" />
-                    </div>-->
-                </div>
-                
                 <button id="clearAll"> All Clear</button>
                 <button id="savePlan">Save Plan</button>
                 <button id="setTextPlan" class="setTextPlan" style="display: none">Set text</button>
-                <!--<div class="seatTextControl" id="seatTextControl"></div>-->
                 <div class="setPriceColorHolder" id="setPriceColorHolder" style="display: none">
+                     
+                    <div class="rotateControls">
+                        <select class="rotationHandle" name="rotationHandle" id="rotationHandle">
+                            <option class="options" selected value="top-to-bottom">Rotate top to bottom</option>
+                            <option class="options"  value="bottom-to-top">Rotate bottom to Top</option>
+                            <option class="options"  value="right-to-left">Rotate right to Left</option>
+                            <option class="options"  value="left-to-right">Rotate left to Right</option>
+                        </select>
+                        <div class="seatRotateIconHolder">
+                            <div class="seatRotateIconHolder">
+                                <img class="shapeRotate" id="rotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.png'.'"/>
+                                <img class="shapeRotate" id="rotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.png'.'"/>
+                            </div>
+                            <input class="seatRotateDegree" type="number" name="rotationAngle" id="rotationAngle" value="10" placeholder="10 degree">
+                        </div>
+                    </div>
+                
+                    <div class="seatIconContainer">
+                        <span class="seatIconTitle">Select seat icon</span>
+                        <div class="seatIconHolder">
+                            <img class="seatIcon" id="icon2" src="'.SEAT_Plan_ASSETS.'images/icons/icon2.png"/>
+                            <img class="seatIcon" id="seat1" src="'.SEAT_Plan_ASSETS.'images/icons/seat1.png"/>
+                            <img alt="No" class="seatIcon" id="seatnull" src="'.SEAT_Plan_ASSETS.'images/icons/remove.png"/>
+                        </div>
+                    </div>
                     <div class="movementHolder" id="movementHolder">
-                        <div class="movementControl">
-                            <div id="left" class="movement">Left</div>
-                            <div id="right" class="movement">Right</div>
-                            <div id="top" class="movement">Top</div>
-                            <div id="bottom" class="movement">Bottom</div>
+                         <div class="movementControl">
+                            <span class="movementText">Movement In Px</span>
+                            <input class="movementInPx" id="movementInPx" name="movementInPx" type="number" value="15" placeholder="movement in px">
                         </div>
                         <div class="movementControl">
-                            <input class="movementInPx" id="movementInPx" name="movementInPx" type="number" value="15" placeholder="movement in px">
+                            <div id="left" class="movement"><i class="arrowIcon far fa-arrow-alt-circle-left"></i></div>
+                            <div id="top" class="movement"><i class="arrowIcon far fa-arrow-alt-circle-up"></i></div>
+                            <div id="bottom" class="movement"><i class="arrowIcon far fa-arrow-alt-circle-down"></i></div>
+                            <div id="right" class="movement"><i class="arrowIcon far fa-arrow-alt-circle-right"></i></div>
                         </div>
                     </div>
                     <div class="colorPriceHolder">
@@ -388,13 +380,15 @@ class CustomPostAjaxMetaSave {
                         <button id="applyColorChanges">Set Color</button>
                     </div>
                     <div class="colorPriceHolder">
-                        <div>
-                            <span> Set Price:</span>
+                        <div class="textPriceHolder">
+                            <span class="priceText"> Set Price:</span>
                             <input type="number" id="setPrice" placeholder="Enter price">
                         </div>
                         <button id="applyChanges">Set Price</button>
                     </div>
+                    
                     <div class="setSeatNumber"  style="display: block">
+                        
                         <input type="text" id="seat_number_prefix" placeholder="Prefix Like A ">
                         <input type="number" id="seat_number_count" placeholder="1" value="0">
                         <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>

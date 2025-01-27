@@ -160,6 +160,10 @@ jQuery(document).ready(function ($) {
             $(this).siblings().removeClass('iconSelected');
             seatIconName = $(this).attr('id');
             imageUrl = $(this).attr('src');
+            if( seatIconName === 'seatnull' ) {
+                imageUrl = '';
+            }
+
             // console.log( seatIconSrc );
             $('.childDiv.save.selected').each(function () {
                 $(this).css({
@@ -184,18 +188,19 @@ jQuery(document).ready(function ($) {
     // $("#parentDiv").css({ width: parentWidth});
 
     $(document).on('click', '.movement', function (e) {
+        // alert('clicked');
         e.preventDefault();
-        const text = $(this).text();
+        const text = $(this).attr('id');
         const offset = parseInt($("input[name='movementInPx']").val(), 10) || 15; // Default to 15 if empty or invalid
         let offsetX = 0;
         let offsetY = 0;
-        if ( text === 'Left' ) {
+        if ( text === 'left' ) {
             offsetX = -offset;
-        } else if ( text === 'Right' ) {
+        } else if ( text === 'right' ) {
             offsetX = offset;
-        } else if ( text === 'Top' ) {
+        } else if ( text === 'top' ) {
             offsetY = -offset;
-        } else if ( text === 'Bottom' ) {
+        } else if ( text === 'bottom' ) {
             offsetY = offset;
         }
 
@@ -347,6 +352,7 @@ jQuery(document).ready(function ($) {
         }else{
             if( $this.hasClass('save') && $('#set_multiselect').hasClass('enable_set_multiselect' ) && !$('#set_seat').hasClass('enable_set_seat' ) ){
                 $this.toggleClass("selected");
+                make_rotate( $(this).attr('id') );
                 /*if ($('#make_circle').hasClass('circleSelected')) {
                     $(this).css('border-radius', '50%');
                 }*/
@@ -631,11 +637,11 @@ jQuery(document).ready(function ($) {
         let topPosition = $(id).css('top');
         leftPosition = parseInt(leftPosition, 10);
         topPosition = parseInt(topPosition, 10);
-        if ($('#'+rotate_id).hasClass('rotateSelected')) {
-            $(id).removeClass('rotateSelected');
+        if ( !$('#'+rotate_id).hasClass('selected') ) {
+            // $(id).removeClass('rotateSelected');
             selectionOrder = selectionOrder.filter(divId => divId !== rotate_id ); // Remove from order
         } else {
-            $(id).addClass('rotateSelected');
+            // $(id).addClass('rotateSelected');
             selectionOrder.push( rotate_id ); // Add to order
         }
         if ( !( rotate_id in rotationData)) {
@@ -719,11 +725,11 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $(document).on( 'click', '#rotateDone', function ( e ) {
+    /*$(document).on( 'click', '#rotateDone', function ( e ) {
         e.preventDefault();
         rotationData = {}; // Store rotation angles and positions for each div
         selectionOrder = [];
-    });
+    });*/
 
     $("#applyColorChanges").on("click", function (e) {
         e.preventDefault();
@@ -1046,15 +1052,12 @@ jQuery(document).ready(function ($) {
         if (isMultiSelecting) {
             $('.childDiv.save.dotted').each(function () {
                 const $this = $(this);
-                make_rotate( $(this).attr('id') );
                 selectedDivs.push($this);
                 selectedDraggableDivs.push($this);
                 selectedSeatsDivs.push($this);
                 $this.toggleClass('selected').removeClass('dotted');
                 $this.css('z-index', 10);
-               /* if ($('#make_circle').hasClass('circleSelected')) {
-                    $(this).css('border-radius', '50%');
-                }*/
+                make_rotate( $(this).attr('id') );
                 if ( !$this.hasClass('selected') ) {
                     selectedDivs = selectedDivs.filter(div => div[0] !== $this[0]);
                     selectedDraggableDivs = selectedDraggableDivs.filter(div => div[0] !== $this[0]);
