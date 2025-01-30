@@ -1,0 +1,198 @@
+/* General styles for the container */
+.templateWrap {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.templateWrap h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Custom checkbox container */
+.importFromPrevCheckbox {
+    position: relative;
+    display: inline-block;
+    font-size: 16px;
+    padding-left: 35px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    user-select: none;
+    color: #333;
+}
+
+/* Hide the default checkbox */
+.importFromPrevCheckbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Custom checkmark */
+.importFromPrevCheckbox .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #e6e6e6;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+/* When the checkbox is checked */
+.importFromPrevCheckbox input[type="checkbox"]:checked + .checkmark {
+    background-color: #007cba; /* WordPress blue */
+    border-color: #007cba;
+}
+
+/* Checkmark symbol */
+.importFromPrevCheckbox .checkmark:after {
+    content: '';
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Show the checkmark symbol when checked */
+.importFromPrevCheckbox input[type="checkbox"]:checked + .checkmark:after {
+    display: block;
+}
+
+/* Import Seat Plan text */
+.importSeatPlan {
+    font-size: 14px;
+    color: #666;
+    margin: 10px 0 20px;
+    display: block;
+    text-align: center;
+}
+
+/* Table styles */
+table.widefat {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+table.widefat th,
+table.widefat td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+table.widefat th {
+    background-color: #f1f1f1;
+    font-weight: 600;
+    color: #333;
+}
+
+table.widefat tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+table.widefat tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table.widefat a {
+    color: #007cba;
+    text-decoration: none;
+}
+
+table.widefat a:hover {
+    text-decoration: underline;
+}
+
+/* Radio button styling */
+input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+/* Button styling */
+.button-primary {
+    display: block;
+    width: auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007cba;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-primary:hover {
+    background-color: #005a9e;
+}
+
+.button-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 202, 0.5);
+}
+
+/* Success notice */
+.notice-success {
+    padding: 15px;
+    margin-top: 20px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+}
+
+.pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.pagination a, .pagination span {
+    display: inline-block;
+    margin: 0 5px;
+    padding: 8px 12px;
+    color: #007cba;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.pagination a:hover {
+    background-color: #007cba;
+    color: #fff;
+    border-color: #007cba;
+}
+
+.pagination .current {
+    background-color: #007cba;
+    color: #fff;
+    border-color: #007cba;
+}
+

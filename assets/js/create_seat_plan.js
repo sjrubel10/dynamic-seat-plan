@@ -1205,7 +1205,8 @@ jQuery(document).ready(function ($) {
 
     $(document).on('click','.parentDiv',function (e) {
         e.preventDefault();
-        if (isSetTextMode) {
+        if ( $('#setTextnew').hasClass('enable_set_text') ) {
+            $("#parentDiv").find('.text-wrapper').removeClass('textSelected');
             set_plan_text(e);
         }
         if( $('#set_shape').hasClass('enable_set_shape' ) ){
@@ -1366,6 +1367,10 @@ jQuery(document).ready(function ($) {
 
         $('.parentDiv').append(shape);
         shape.toggleClass('selectedShape');
+        if( $('#set_shape').hasClass('enable_set_shape' ) ){
+            $('#set_shape').removeClass('enable_set_shape');
+        }
+
         $(".dynamicShapeColorHolder").show();
 
         shape.draggable({ containment: '.parentDiv' });
@@ -1425,6 +1430,11 @@ jQuery(document).ready(function ($) {
             // Hide the color holder if the shape is deselected
             $(".dynamicShapeColorHolder").hide();
         }
+
+        if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            $(this).remove();
+        };
+
     });
 
 
@@ -1439,7 +1449,7 @@ jQuery(document).ready(function ($) {
             left: inputX,
             top: inputY,
             transform: 'translate(-50%, -50%)',
-            width: '50px',
+            width: '120px',
             zIndex: 999,
         });
         $('.parentDiv').append(input);
@@ -1492,6 +1502,9 @@ jQuery(document).ready(function ($) {
                         }
                     });
                 });*/
+                if( $('#setTextnew').hasClass('enable_set_text') ){
+                    $('#setTextnew').removeClass('enable_set_text');
+                }
             } else {
                 $(this).remove();
             }
@@ -1540,6 +1553,10 @@ jQuery(document).ready(function ($) {
             // Hide the color holder if the shape is deselected
             $(".dynamicTextControlHolder").hide();
         }
+
+        if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            $(this).remove();
+        };
     });
 
     $(document).on("click",".text-wrapper_old", function (e) {

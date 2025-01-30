@@ -2,20 +2,20 @@
     display: flex;
     position: relative;
     width: 100%;
-    height: 500px;
+    height: 550px;
 }
 .seatPlanHolder{
     display: flex;
     position: relative;
-    width: calc( 100% - 120px );
+    width: calc( 100% - 150px );
     height: 500px;
     overflow: scroll;
 }
 .seatActionControl{
     display: block;
-    width: 120px;
-    margin-left: 12px;
-    /*background-color: #0a6ebd;*/
+    width: 150px;
+    margin-left: 10px;
+    padding: 10px;
 }
 #parentDiv {
     border: 1px solid #e9e4e4;
@@ -43,8 +43,8 @@
 }
 .movementHolder{
     display: grid;
-    width: 130px;
-    margin-bottom: 8px;
+    width: 100%;
+    padding-bottom: 10px;
 }
 .childDiv {
     width: 35px;
@@ -85,11 +85,17 @@
 
 .rotateControls{
     display: grid;
-    width: 130px;
+    width: 100%;
     border-bottom: 1px dotted #e5dfdf;
 }
 
-
+.seatIconContainer{
+    display: block;
+    padding-bottom: 10px;
+    margin-top: 5px;
+    float: left;
+    width: 100%;
+}
 
 .seatIconContainer, .movementHolder{
     border-bottom: 1px dotted #b9b2b2;
@@ -216,7 +222,7 @@
     display: flex;
     position: relative;
     margin-top: 5px;
-    height: 30px;
+    /*height: 30px;*/
 }
 .movement{
     position: relative;
@@ -239,15 +245,34 @@
     font-size: 11px !important;
 }
 
+.seatRotateIconTextHolder{
+    display: block;
+    float: right;
+    width: 100%;
+    margin-bottom: 10px;
+}
+.seatRotateIconImgHolder{
+    display: flex;
+    width: 100%;
+    height: 30px;
+    /*margin-bottom: 10px;*/
+}
+
 .seatRotateIconHolder{
     display: flex;
-    width: 130px;
-    padding: 3px 0px 10px 0px;
+    width: 100%;
     height: 30px;
 }
 .seatRotateDegree{
-    width: 55px;
+    width: 60px;
+    padding: 0 5px !important;
     margin-left: 10px;
+}
+.seatRotateIconText{
+    display: block;
+    float: left;
+    width: 100%;
+    position: relative;
 }
 
 .movementInPx{
@@ -257,10 +282,8 @@
     padding: 0 5px !important;
 }
 .movementText{
-    width: 65px;
-    margin-right: 8px;
-    padding-top: 2px;
-    text-align: center;
+    width: 100%;
+    text-align: left;
     line-height: 14px;
     font-family: roboto sans-serif;
     color: #444444;
@@ -299,12 +322,13 @@
     display: block;
     float: left;
     position: relative;
-    width: 130px;
+    width: 100%;
 }
 .colorPriceHolder{
-    width: 110px;
+    width: 100%;
     display: grid;
     margin-bottom: 12px;
+    margin-top: 10px;
 }
 
 .setShapeTitle{
@@ -346,28 +370,49 @@
     font-weight: bold;
 }
 
-#applyChanges, #applyColorChanges {
+#set_seat_number{
+    margin-top: 2px;
+}
+
+
+
+#applyChanges, #applyColorChanges, #set_seat_number{
     background-color: #817a7a;
     color: #fff;
-    width: 110px
+    width: 125px;
+    border-width: 1px;
+    padding: 3px 0px;
+    border-radius: 3px;
+    cursor: pointer;
 }
 
-#seat_number_prefix,
-#seat_number_count {
-    width: 110px;
-}
-
-#applyChanges, #applyColorChanges:hover {
+#applyChanges:hover,
+#applyColorChanges:hover,
+#set_seat_number:hover {
     background-color: #218838;
-    width: 110px
+}
+
+.seatNumberContainer{
+    display: flex;
+    width: 130px;
+}
+
+#seat_number_prefix{
+    width: 75px;
+}
+#seat_number_count {
+    width: 45px;
+    padding: 0 2px !important;
 }
 
 #clearAll {
+    display: block;
+    float: left;
     background-color: #dc3545;
     color: #fff;
     height: 30px;
-    width: 120px;
-    margin: 1px 0px 10px 0px;
+    width: 100%;
+    margin-bottom: 15px;
     border: 1px solid #666666;
     border-radius: 5px;
     cursor: pointer;
@@ -378,11 +423,13 @@
 }
 
 #savePlan {
+    display: block;
+    float: left;
     background-color: #37a8db;
     color: #fff;
     height: 35px;
-    width: 120px;
-    margin-bottom: 8px;
+    width: 100%;
+    margin-bottom: 15px;
     border: 1px solid #666666;
     border-radius: 5px;
     cursor: pointer;
@@ -446,14 +493,13 @@
 }
 .seatIconHolder{
     display: flex;
-    width: 120px;
-    gap: 2px;
-    margin-bottom: 5px;
+    width: 100%;
+    gap: 3px;
 }
 .seatIcon{
-    width: 22px;
-    height: 20px;
-    border: 1px solid #666666;
+    width: 25px;
+    height: 23px;
+    border: 1px solid #ddd9d9;
     padding: 2px;
     margin: 2px;
     cursor: pointer;
@@ -470,16 +516,15 @@
 }
 .dynamicShapeHolder{
     display: none;
-    width: 120px;
+    width: 100%;
     float: left;
     position: relative;
     margin-bottom: 10px;
-    font-size: 11px;
 }
 .shapeRotationHolder{
     display: flex;
 }
-.textControl, .textRotationHolder{
+.textRotationHolder{
     display: flex;
     width: 120px;
 }
@@ -490,11 +535,6 @@
     cursor: pointer;
 }
 
-#shapeRotateLeft{
-    margin-top: 3px;
-    width: 20px;
-    height: 20px;
-}
 .setShapeColor{
     width: 28px;
 }
@@ -598,16 +638,30 @@ button.zoom-in:hover, button.zoom-out:hover {
 }
 
 .dynamicTextControlHolder{
-    margin: 10px 0px;
+    display: block;
+    float: left;
+    position: relative;
+    margin-bottom: 10px;
+    width: 100%;
+}
+.dynamicTextControlText{
+    display: block;
+    float: left;
+    position: relative;
+    width: 100%;
+    text-align: left;
+    padding: 2px 0px;
 }
 .dynamicShapeControl{
     display: block;
-    width: 120px;
+    float: left;
+    width: 100%;
+    margin-bottom: 10px;
 }
 .colorRemoveHolder{
     display: flex;
-    width: calc(100% - 10px);
-    padding: 10px 10px 5px 0px;
+    width: 100%;
+    padding-top: 5px;
 }
 #setShapeColor{
     width: 30px;
@@ -653,22 +707,20 @@ button.zoom-in:hover, button.zoom-out:hover {
 
 .dynamicTextControlContainer {
     display: flex;
+    width: 100%;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 4px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    width: max-content;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);*/
 }
 
 .textControl {
     display: flex;
     gap: 8px;
-    align-items: center;
-    margin-bottom: 10px;
+    width: 100%;
+    /*align-items: center;*/
+    /*margin-bottom: 10px;*/
 }
 
 .textControl button {
@@ -699,7 +751,6 @@ button.zoom-in:hover, button.zoom-out:hover {
 }
 
 .textControl input[type="color"] {
-    border: none;
     width: 35px;
     height: 35px;
     padding: 0;

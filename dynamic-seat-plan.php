@@ -18,39 +18,16 @@ class CustomPostAjaxMetaSave {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
         add_action('wp_ajax_save_custom_meta_data', [$this, 'handle_ajax_meta_save']);
         add_action('admin_footer', [$this, 'add_inline_scripts']);
-        add_action('wp_ajax_upload_icon', [$this, 'dsp_upload_icon']);
-//        add_shortcode('display_seat_plan', [$this, 'display_seat_plan_shortcode']);
+        add_action('admin_menu', [$this, 'add_admin_menu']);
+
 
         add_filter( 'the_content', [ $this, 'display_seat_plan'] );
+
+        add_action('wp_ajax_import_from_template_checkbox_state',[ $this,  'import_from_template_checkbox_state']);
+        add_action('wp_ajax_nopriv_import_from_template_checkbox_state', [ $this, 'import_from_template_checkbox_state']);
+
+
         $this->define_constants();
-    }
-    public function dsp_upload_icon() {
-        check_ajax_referer('dsp_upload_icon_nonce', 'security');
-
-//        error_log( print_r( $_POST, true ) );
-        if (!empty($_FILES['icon']['name'])) {
-            $upload_dir = plugin_dir_path(__FILE__) . 'assets/images/icons/';
-            $uploaded_file = $_FILES['icon'];
-            $file_name = sanitize_file_name($uploaded_file['name']);
-            $file_path = $upload_dir . $file_name;
-
-            $file_type = wp_check_filetype($file_name);
-            if ($file_type['ext'] !== 'png') {
-                wp_send_json_error(['message' => 'Only PNG files are allowed.']);
-            }
-            if (!file_exists($upload_dir)) {
-                wp_mkdir_p($upload_dir);
-            }
-            if (move_uploaded_file($uploaded_file['tmp_name'], $file_path)) {
-                wp_send_json_success(['message' => 'Icon uploaded successfully!', 'url' => plugins_url('assets/images/icons/' . $file_name, __FILE__)]);
-            } else {
-                wp_send_json_error(['message' => 'Failed to upload the icon.']);
-            }
-        } else {
-            wp_send_json_error(['message' => 'No file uploaded.']);
-        }
-
-        wp_die();
     }
 
     public function define_constants() {
@@ -86,23 +63,224 @@ class CustomPostAjaxMetaSave {
         );
     }
 
-    public function render_meta_box($post) {
+    public function add_admin_menu(){
+        add_menu_page(
+            __('Dynamic Seat Plan', 'textdomain'),
+            __('Dynamic Seat Plan', 'textdomain'),
+            'manage_options',
+            'seat-plan',
+            [$this, 'render_admin_page'],
+            'dashicons-schedule',
+            20
+        );
+
+        add_submenu_page(
+            'seat-plan',
+            __('Custom Items', 'textdomain'),
+            __('Custom Items', 'textdomain'),
+            'manage_options',
+            'edit.php?post_type=custom_item',
+            null
+        );
+        add_submenu_page(
+            'seat-plan',
+            __('Templates', 'textdomain'),
+            __('Templates', 'textdomain'),
+            'manage_options',
+            'seat-templates',
+            [$this, 'render_manage_seat_templates']
+        );
+
+        add_submenu_page(
+            'seat-plan',
+            __('Settings', 'textdomain'),
+            __('Settings', 'textdomain'),
+            'manage_options',
+            'seat-plan-settings',
+            [$this, 'render_settings_page']
+        );
+    }
+
+    public function handle_ajax_meta_save() {
+        check_ajax_referer('custom_ajax_nonce', 'nonce');
+
+        $post_id = intval($_POST['post_id']);
+        if (!$post_id || get_post_type($post_id) !== 'custom_item') {
+            wp_send_json_error(['message' => 'Invalid post ID or post type.']);
+        }
+
+        if (!current_user_can('edit_post', $post_id)) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+
+        $custom_field_1 = $_POST['custom_field_1'];
+        $seat_plan_texts= isset( $_POST['seatPlanTexts'] ) ? $_POST['seatPlanTexts'] : '' ;
+        $seatIcon = isset( $_POST['seatIcon'] ) ? $_POST['seatIcon'] : 'noicon';
+        $dynamicShapes = isset( $_POST['dynamicShapes'] ) ? $_POST['dynamicShapes'] : '';
+        $seat_plan_data = array(
+            'seat_data' => $custom_field_1,
+            'seat_text_data' => $seat_plan_texts,
+            'seatIcon' => $seatIcon,
+            'dynamic_shapes' => $dynamicShapes,
+        );
+        update_post_meta($post_id, '_custom_field_1', $seat_plan_data);
+
+        wp_send_json_success(['message' => 'Meta data saved successfully.']);
+    }
+    public function import_from_template_checkbox_state(){
+        check_ajax_referer('ajax_nonce', 'nonce');
+        $is_checked = isset($_POST['is_checked']) ? intval($_POST['is_checked']) : 0;
+        update_option('import_design_from_template', $is_checked);
+        wp_send_json_success(['message' => 'Checkbox state saved successfully']);
+    }
+    public function render_admin_page(){
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Seat Plan Admin Page', 'textdomain'); ?></h1>
+            <p><?php _e('This is a custom admin page for the Seat Plan plugin.', 'textdomain'); ?></p>
+
+        </div>
+        <?php
+    }
+
+    public function render_manage_seat_templates() {
+        // Get current page number
+        $paged = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
+
+        // Query arguments
+        $args = [
+            'post_type'      => 'custom_item',
+            'posts_per_page' => 10, // Limit to 10 posts per page
+            'post_status'    => 'publish', // Only published posts
+            'paged'          => $paged, // Current page
+        ];
+
+        $query = new WP_Query($args);
+
+        $import_from_template = get_option( 'import_design_from_template' );
+        $is_checked = ($import_from_template === '1') ? 'checked' : ''; // Ensure that it's a string comparison
+        ?>
+        <div class="templateWrap">
+            <h1><?php _e('Seat Plan Templates', 'textdomain'); ?></h1>
+
+            <!-- Checkbox with custom styling -->
+
+            <label class="importFromPrevCheckbox">
+                <input type="checkbox" name="importFromTemplate" id="importFromTemplate" <?php echo $is_checked; ?>>
+                <span class="checkmark"></span>
+                <?php _e('Import From Template', 'textdomain'); ?>
+            </label>
+
+            <span class="importSeatPlan"><?php _e('Select any template, then click "Save Selection." After saving, go to create a new item.', 'textdomain'); ?></span>
+
+            <form method="post" action="">
+                <?php if ($query->have_posts()) : ?>
+                    <table class="widefat fixed striped">
+                        <thead>
+                        <tr>
+                            <th><?php _e('Title', 'textdomain'); ?></th>
+                            <th><?php _e('Date', 'textdomain'); ?></th>
+                            <th><?php _e('Actions', 'textdomain'); ?></th>
+                            <th><?php _e('Select', 'textdomain'); ?></th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <?php while ($query->have_posts()) : $query->the_post(); ?>
+                            <tr>
+                                <td>
+                                    <?php
+                                    $title = get_the_title();
+                                    echo !empty($title) ? $title : __('No Title Available', 'textdomain');
+                                    ?>
+                                </td>
+                                <td><?php echo get_the_date(); ?></td>
+                                <td>
+                                    <a href="<?php echo get_edit_post_link(); ?>"><?php _e('Edit', 'textdomain'); ?></a> |
+                                    <a href="<?php echo get_permalink(); ?>" target="_blank"><?php _e('View', 'textdomain'); ?></a>
+                                </td>
+                                <td>
+                                    <input type="radio" name="selected_template" value="<?php echo get_the_ID(); ?>"/>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        <?php
+                        echo paginate_links([
+                            'total'        => $query->max_num_pages,
+                            'current'      => $paged,
+                            'format'       => '?paged=%#%',
+                            'show_all'     => false,
+                            'type'         => 'plain',
+                            'prev_next'    => true,
+                            'prev_text'    => __('&laquo; Previous', 'textdomain'),
+                            'next_text'    => __('Next &raquo;', 'textdomain'),
+                        ]);
+                        ?>
+                    </div>
+
+                    <p>
+                        <input type="submit" name="submit_template" class="button-primary" value="<?php _e('Save Selection', 'textdomain'); ?>">
+                    </p>
+                <?php else : ?>
+                    <p><?php _e('No templates found.', 'textdomain'); ?></p>
+                <?php endif; ?>
+
+                <?php
+                wp_reset_postdata();
+                ?>
+            </form>
+        </div>
+
+        <?php
+        // Handle form submission if the form was posted
+        if (isset($_POST['submit_template']) && isset($_POST['selected_template'])) {
+            $selected_template_id = intval($_POST['selected_template']);
+            update_option('selected_seat_plan_template', $selected_template_id);
+
+            echo '<div class="notice notice-success is-dismissible">';
+            echo '<p>' . __('Template selected successfully!', 'textdomain') . '</p>';
+            echo '</div>';
+        }
+    }
+
+
+
+    public function render_settings_page(){ ?>
+        <div class="wrap">
+            <h1><?php _e('Seat Plan Settings', 'textdomain'); ?></h1>
+            <p><?php _e('This is the Settings page under the Seat Plan menu.', 'textdomain'); ?></p>
+        </div>
+        <?php
+    }
+
+    public function render_meta_box( $post ) {
+
+        $import_from_template = get_option( 'import_design_from_template' );
+        $is_checked = ($import_from_template === '1') ? 1 : 0;
+
+        $load_from_template = get_option( 'selected_seat_plan_template' );
+        if( $is_checked === 1 && $load_from_template ){
+            $post_id = $load_from_template;
+        }else{
+            $post_id = $post->ID;
+        }
+
+
         wp_nonce_field('save_custom_meta', 'custom_meta_nonce');
-        $plan_data =  get_post_meta($post->ID, '_custom_field_1', true ) ;
+        $plan_data =  get_post_meta( $post_id, '_custom_field_1', true ) ;
         $plan_seats = isset( $plan_data['seat_data'] ) ? $plan_data['seat_data'] : array();
         $plan_seat_texts = isset( $plan_data['seat_text_data'] ) ? $plan_data['seat_text_data'] : array();
-        $seatIcon = isset( $plan_data['seatIcon'] ) ? $plan_data['seatIcon'] : 'noicon';
         $dynamic_shapes = isset( $plan_data['dynamic_shapes'] ) ? $plan_data['dynamic_shapes'] : '';
-        if( $seatIcon === 'noicon' || $seatIcon === 'seatnull' ){
-            $icon_url = '';
-        }else{
-            $icon_url = SEAT_Plan_ASSETS."images/icons/".$seatIcon.".png";
-        }
+
         ?>
         <h1>Make Seat Plan</h1>
 
         <div class="controls" id="<?php echo esc_attr( $post->ID )?>">
-<!--            <input type="text" id="plan-name" placeholder="Plan Name">-->
             <input type="hidden" id="plan_id" name="plan_id" value="<?php echo esc_attr( $post->ID );?>">
             <div class="planControlHolder">
                 <button class="set_multiselect" id="set_multiselect">Multiselect</button>
@@ -140,7 +318,7 @@ class CustomPostAjaxMetaSave {
             }else{
                 $select_class = '';
             }
-            $src = SEAT_Plan_ASSETS.'images/icons/shape_icons/'.$val[0].'.jpg';
+            $src = SEAT_Plan_ASSETS.'images/icons/shape_icons/'.$val[1].'.jpg';
             $shapeText .= '<div class="shapeText '.$select_class.'" id="'.$key.'"><img class="shapeIcon" src="'.$src.'" /></div>';
         }
 
@@ -161,11 +339,11 @@ class CustomPostAjaxMetaSave {
         $parent_height =$rows * ($childHeight + $gap) - $gap;
 
         echo '<div class="parentDiv" id="parentDiv" style="position: absolute; width: ' .$parent_width . 'px; height: ' . $parent_height . 'px;"><div id="popupContainer" class="popup">
-            <div class="popupContent">
-                <span id="closePopup" class="close">&times;</span>
-                <div id="popupInnerContent"></div>
-            </div>
-        </div>';
+                  <div class="popupContent">
+                      <span id="closePopup" class="close">&times;</span>
+                      <div id="popupInnerContent"></div>
+                  </div>
+              </div>';
         if ( is_array( $dynamic_shapes ) && count( $dynamic_shapes ) > 0 ) {
             foreach ( $dynamic_shapes as $dynamic_shape ) {
                 $shape_rotate_deg = isset( $dynamic_shape['shapeRotateDeg'] ) ? $dynamic_shape['shapeRotateDeg'] : 0;
@@ -201,7 +379,6 @@ class CustomPostAjaxMetaSave {
             </div>';
             }
         }
-
 
         foreach ( $seats as $seat ) {
             $isSelected = false;
@@ -271,7 +448,6 @@ class CustomPostAjaxMetaSave {
             }else{
                 $block = 'none';
             }
-//    echo '<div class="childDiv"  data-row="'.$col.'" data-col="'.$row.'" data-id="' . $col . '-'. $row. ' " data-price="0" style="position: absolute; width: ' . $childWidth . 'px; height: ' . $childHeight . 'px; left: ' . $top . 'px; top: ' . $left . 'px;">' . $id . '</div>';
             echo '<div class=" childDiv ' . $class . '"
               id = "div'.$col.'_'.$row.'"
               data-id="' . $col . '-' . $row . '" 
@@ -300,15 +476,15 @@ class CustomPostAjaxMetaSave {
             </div>
             <div class="seatActionControl">
                 <div class="dynamicShapeHolder" id="dynamicShapeHolder">
-                '.$shapeText.'
+                    '.$shapeText.'
                 </div>
                 <div class="dynamicShapeColorHolder" style="display: none">
                     <div class="dynamicShapeControl">
                         <div class="dynamicShapeControlText">Shape Setting</div>
                         <div class="colorRemoveHolder">
                             <div class="shapeRotationHolder">
-                                <img class="shapeRotate" id="shapeRotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.png'.'"/>
-                                <img class="shapeRotate" id="shapeRotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.png'.'"/>
+                                <img class="shapeRotate" id="shapeRotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.webp'.'"/>
+                                <img class="shapeRotate" id="shapeRotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.webp'.'"/>
                             </div>
                             <input type="color" id="setShapeColor" value="#3498db">
                             <button class="removeDynamicShape" id="removeDynamicShape">X</button>
@@ -325,8 +501,8 @@ class CustomPostAjaxMetaSave {
                             <input type="color" id="setTextColor" value="#3498db">
                         </div>
                         <div class="textRotationHolder">
-                            <img class="textRotate" id="textRotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.png'.'"/>
-                            <img class="textRotate" id="textRotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.png'.'"/>
+                            <img class="textRotate" id="textRotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.webp'.'"/>
+                            <img class="textRotate" id="textRotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.webp'.'"/>
                         </div>
                     </div>
                 </div>
@@ -335,23 +511,24 @@ class CustomPostAjaxMetaSave {
                 <button id="savePlan">Save Plan</button>
                 <button id="setTextPlan" class="setTextPlan" style="display: none">Set text</button>
                 <div class="setPriceColorHolder" id="setPriceColorHolder" style="display: none">
-                     
                     <div class="rotateControls">
-                        <select class="rotationHandle" name="rotationHandle" id="rotationHandle">
+                        <select class="rotationHandle" name="rotationHandle" id="rotationHandle" style="display: none">
                             <option class="options" selected value="top-to-bottom">Rotate top to bottom</option>
                             <option class="options"  value="bottom-to-top">Rotate bottom to Top</option>
                             <option class="options"  value="right-to-left">Rotate right to Left</option>
                             <option class="options"  value="left-to-right">Rotate left to Right</option>
                         </select>
-                        <div class="seatRotateIconHolder">
-                            <div class="seatRotateIconHolder">
-                                <img class="shapeRotate" id="rotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.png'.'"/>
-                                <img class="shapeRotate" id="rotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.png'.'"/>
+                        <div class="seatRotateIconTextHolder">
+                            <span class="seatRotateIconText">Seat Rotate In Degree</span>
+                            <div class="seatRotateIconImgHolder"> 
+                                <div class="seatRotateIconHolder">
+                                    <img class="shapeRotate" id="rotateRight" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_right.webp'.'"/>
+                                    <img class="shapeRotate" id="rotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.webp'.'"/>
+                                </div>
+                                <input class="seatRotateDegree" type="number" name="rotationAngle" id="rotationAngle" value="10" placeholder="10 degree">
                             </div>
-                            <input class="seatRotateDegree" type="number" name="rotationAngle" id="rotationAngle" value="10" placeholder="10 degree">
                         </div>
                     </div>
-                
                     <div class="seatIconContainer">
                         <span class="seatIconTitle">Select seat icon</span>
                         <div class="seatIconHolder">
@@ -363,7 +540,7 @@ class CustomPostAjaxMetaSave {
                     <div class="movementHolder" id="movementHolder">
                          <div class="movementControl">
                             <span class="movementText">Movement In Px</span>
-                            <input class="movementInPx" id="movementInPx" name="movementInPx" type="number" value="15" placeholder="movement in px">
+                            <input class="movementInPx" id="movementInPx" name="movementInPx" type="number" value="15" placeholder="movement in px" style="display: none">
                         </div>
                         <div class="movementControl">
                             <div id="left" class="movement"><i class="arrowIcon far fa-arrow-alt-circle-left"></i></div>
@@ -386,11 +563,11 @@ class CustomPostAjaxMetaSave {
                         </div>
                         <button id="applyChanges">Set Price</button>
                     </div>
-                    
                     <div class="setSeatNumber"  style="display: block">
-                        
-                        <input type="text" id="seat_number_prefix" placeholder="Prefix Like A ">
-                        <input type="number" id="seat_number_count" placeholder="1" value="0">
+                         <div class="seatNumberContainer">
+                            <input type="text" id="seat_number_prefix" placeholder="Set Prefix">
+                            <input type="number" id="seat_number_count" placeholder="1" value="0">
+                         </div>
                         <button class="set_seat_number" id="set_seat_number">Set Seat Number</button>
                     </div>
                 </div>
@@ -410,36 +587,16 @@ class CustomPostAjaxMetaSave {
 
             wp_localize_script('custom-ajax-script', 'ajax_object', [
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('custom_ajax_nonce')
+                'nonce' => wp_create_nonce('custom_ajax_nonce'),
             ]);
         }
-    }
+        wp_enqueue_script('templatemanage',SEAT_Plan_ASSETS . 'js/templatemanage.js', array(), SEAT_Plan_VERSION, true);
+        wp_enqueue_style('templates', SEAT_Plan_ASSETS . 'css/templates.css', array(), SEAT_Plan_VERSION );
+        wp_localize_script('templatemanage', 'site_ajax_object', [
+            'site_ajax_url' => admin_url('admin-ajax.php'),
+            'site_nonce' => wp_create_nonce('ajax_nonce'),
+        ]);
 
-    public function handle_ajax_meta_save() {
-        check_ajax_referer('custom_ajax_nonce', 'nonce');
-
-        $post_id = intval($_POST['post_id']);
-        if (!$post_id || get_post_type($post_id) !== 'custom_item') {
-            wp_send_json_error(['message' => 'Invalid post ID or post type.']);
-        }
-
-        if (!current_user_can('edit_post', $post_id)) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-
-        $custom_field_1 = $_POST['custom_field_1'];
-        $seat_plan_texts= isset( $_POST['seatPlanTexts'] ) ? $_POST['seatPlanTexts'] : '' ;
-        $seatIcon = isset( $_POST['seatIcon'] ) ? $_POST['seatIcon'] : 'noicon';
-        $dynamicShapes = isset( $_POST['dynamicShapes'] ) ? $_POST['dynamicShapes'] : '';
-        $seat_plan_data = array(
-                'seat_data' => $custom_field_1,
-                'seat_text_data' => $seat_plan_texts,
-                'seatIcon' => $seatIcon,
-                'dynamic_shapes' => $dynamicShapes,
-        );
-        update_post_meta($post_id, '_custom_field_1', $seat_plan_data);
-
-        wp_send_json_success(['message' => 'Meta data saved successfully.']);
     }
 
     public function add_inline_scripts() {
@@ -574,87 +731,6 @@ class CustomPostAjaxMetaSave {
         }
         return $content;
     }
-    public function display_seat_plan_new($content) {
-    if (is_single() && in_the_loop() && is_main_query()) {
-        // Enqueue styles and scripts
-        wp_enqueue_style('seat-plan-css', SEAT_Plan_ASSETS . 'css/seat-plan.css', [], SEAT_Plan_VERSION);
-        wp_enqueue_script('view_seat_info', SEAT_Plan_ASSETS . 'js/view_seat_info.js', ['jquery'], SEAT_Plan_VERSION);
-
-        $post_id = get_the_ID();
-        $plan_data = maybe_unserialize(get_post_meta($post_id, '_custom_field_1', true));
-        $plan_seats = isset( $plan_data['seat_data'] ) ? $plan_data['seat_data'] : array();
-//        error_log( print_r( [ '$plan_seats' => $plan_seats ], true ) );
-
-        if (!empty($plan_seats) && is_array($plan_seats)) {
-            $leastLeft = PHP_INT_MAX;
-            $leastTop = PHP_INT_MAX;
-
-            // Sanitize and calculate minimum values
-            foreach ($plan_seats as $item) {
-                if (isset($item['left'], $item['top'])) {
-                    $currentLeft = absint(rtrim($item['left'], 'px'));
-                    $currentTop = absint(rtrim($item['top'], 'px'));
-
-                    if ($currentLeft < $leastLeft) {
-                        $leastLeft = $currentLeft;
-                    }
-                    if ($currentTop < $leastTop) {
-                        $leastTop = $currentTop;
-                    }
-                }
-            }
-
-            // Start building the seat plan content
-            $custom_content = '<div id="seat-info" style="margin-top: 20px; font-size: 16px;">
-                                   <strong>Seat Info:</strong> <span id="info"></span>
-                               </div>
-                               <div id="seat-grid">
-                                   <div class="boxHolder">';
-
-            foreach ($plan_seats as $seat) {
-                if (isset($seat['left'], $seat['top'], $seat['width'], $seat['height'], $seat['id'], $seat['price'], $seat['color'], $seat['data_degree'])) {
-                    // Sanitize seat data
-                    $width = absint($seat['width']);
-                    $height = absint($seat['height']);
-                    $left = absint(rtrim($seat['left'], 'px')) - $leastLeft;
-                    $top = absint(rtrim($seat['top'], 'px')) - $leastTop;
-                    $uniqueId = 'seat-' . sanitize_key($seat['id']);
-                    $price = esc_attr($seat['price']);
-                    $degree = absint($seat['data_degree']);
-                    $color = sanitize_hex_color($seat['color']);
-                    $seat_number = isset($seat['seat_number']) ? esc_html($seat['seat_number']) : '';
-
-                    // Generate seat HTML
-                    $custom_content .= '<div class="box" 
-                        id="' . esc_attr($uniqueId) . '" 
-                        data-price="' . esc_attr($price) . '" 
-                        data-seat-num="1" 
-                        style="
-                            width: ' . $width . 'px;
-                            height: ' . $height . 'px;
-                            left: ' . $left . 'px;
-                            top: ' . $top . 'px;
-                            transform: rotate(' . $degree . 'deg);"
-                        title="Price: $' . esc_attr($price) . '">
-                        <div class="boxChild" 
-                            style="
-                                background-color: ' . esc_attr($color) . ';
-                                width: ' . ($width - 4) . 'px;
-                                height: ' . ($height - 3) . 'px;">
-                            <span class="seat_number">' . $seat_number . '</span>
-                        </div>
-                    </div>';
-                }
-            }
-
-            $custom_content .= '</div></div>';
-            $content .= $custom_content;
-        }
-    }
-    return $content;
-}
-
-
 
 }
 
