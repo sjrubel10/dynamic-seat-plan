@@ -1,5 +1,31 @@
 jQuery(document).ready(function ($) {
 
+    $(document).on( 'click', '.removeFromTemplate', function( e ) {
+        e.preventDefault();
+        let templateId = $(this).parent().attr('id');
+        console.log( templateId );
+        $.ajax({
+            url: site_ajax_object.site_ajax_url,
+            type: 'POST',
+            data: {
+                action: 'remove_from_templates',
+                templateId: templateId,
+                nonce: site_ajax_object.site_nonce,
+            },
+            success: function (response) {
+                if (response.success) {
+                    $(this).parent().fadeOut();
+                    alert('Plan removed from templates successfully!');
+                } else {
+                    alert('Error: ' + response.data.message);
+                }
+            },
+            error: function () {
+                alert('An unexpected error occurred.');
+            }
+        });
+    });
+
     $(document).on( 'change', '#importFromTemplate', function( e ) {
         e.preventDefault();
         let isChecked = $(this).prop('checked') ? 1 : 0;

@@ -26,8 +26,69 @@ class CustomPostAjaxMetaSave {
         add_action('wp_ajax_import_from_template_checkbox_state',[ $this,  'import_from_template_checkbox_state']);
         add_action('wp_ajax_nopriv_import_from_template_checkbox_state', [ $this, 'import_from_template_checkbox_state']);
 
+        add_action('wp_ajax_render_manage_seat_templates_for_import', [ $this,  'render_manage_seat_templates_for_import'] );
+        add_action('wp_ajax_nopriv_render_manage_seat_templates_for_import', [ $this,  'render_manage_seat_templates_for_import'] ); // Allow non-logged-in users if needed
+
+        add_action('wp_ajax_remove_from_templates',[ $this,  'remove_from_templates']);
+
 
         $this->define_constants();
+    }
+
+    public function remove_from_templates(){
+        $template_id = isset($_POST['templateId']) ? absint($_POST['templateId']) : '';
+        $result = delete_post_meta( $template_id, 'is_template');
+        wp_send_json_success( $result );
+    }
+
+    function render_manage_seat_templates_for_import() {
+        $paged = isset($_POST['paged']) ? absint($_POST['paged']) : 1;
+        $original_post_id = isset($_POST['postId']) ? absint($_POST['postId']) : 1;
+        $args = [
+            'post_type'      => 'custom_item',
+            'posts_per_page' => 100,
+            'post_status'    => 'publish',
+            'paged'          => $paged,
+            'meta_query'     => [
+                [
+                    'key'   => 'is_template',
+                    'value' => 'template',
+                    'compare' => '=' // Exact match
+                ]
+            ],
+        ];
+
+        $query = new WP_Query($args);
+        ob_start();
+        ?>
+        <div class="templateWrap">
+            <span class="importSeatPlanTitleText"><?php _e('Seat Plan Templates', 'textdomain'); ?></span>
+            <span class="importSeatPlanText"><?php _e('Select any template', 'textdomain'); ?></span>
+            <div class="popupTemplateContainer">
+                <?php if ($query->have_posts()) : ?>
+                    <div class="templatesHolder">
+                        <?php while ($query->have_posts()) : $query->the_post(); ?>
+                            <?php
+                            $post_id = get_the_ID();
+                            $title = get_the_title() ?: __('No Title Available', 'textdomain');
+                            $edit_url = admin_url("post.php?post={$original_post_id}&action=edit&templateId={$post_id}");
+                            ?>
+                            <div class="templates" id="template-<?php echo esc_attr($post_id); ?>">
+                                <a class="templateLinks" href="<?php echo esc_url($edit_url); ?>">
+                                    <?php echo esc_html($title); ?>
+                                </a>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else : ?>
+                    <p><?php _e('No templates found.', 'textdomain'); ?></p>
+                <?php endif; ?>
+                <?php wp_reset_postdata(); ?>
+            </div>
+        </div>
+        <?php
+        $output = ob_get_clean();
+        wp_send_json_success($output);
     }
 
     public function define_constants() {
@@ -117,6 +178,7 @@ class CustomPostAjaxMetaSave {
         $seat_plan_texts= isset( $_POST['seatPlanTexts'] ) ? $_POST['seatPlanTexts'] : '' ;
         $seatIcon = isset( $_POST['seatIcon'] ) ? $_POST['seatIcon'] : 'noicon';
         $dynamicShapes = isset( $_POST['dynamicShapes'] ) ? $_POST['dynamicShapes'] : '';
+        $template = isset( $_POST['template'] ) ? $_POST['template'] : '';
         $seat_plan_data = array(
             'seat_data' => $custom_field_1,
             'seat_text_data' => $seat_plan_texts,
@@ -124,6 +186,9 @@ class CustomPostAjaxMetaSave {
             'dynamic_shapes' => $dynamicShapes,
         );
         update_post_meta($post_id, '_custom_field_1', $seat_plan_data);
+        if( $template !== '' ){
+            update_post_meta( $post_id, 'is_template', $template );
+        }
 
         wp_send_json_success(['message' => 'Meta data saved successfully.']);
     }
@@ -150,26 +215,23 @@ class CustomPostAjaxMetaSave {
         // Query arguments
         $args = [
             'post_type'      => 'custom_item',
-            'posts_per_page' => 10, // Limit to 10 posts per page
-            'post_status'    => 'publish', // Only published posts
-            'paged'          => $paged, // Current page
+            'posts_per_page' => 100,
+            'post_status'    => 'publish',
+            'paged'          => $paged,
+            'meta_query'     => [
+                [
+                    'key'   => 'is_template',
+                    'value' => 'template',
+                    'compare' => '='
+                ]
+            ],
         ];
 
         $query = new WP_Query($args);
 
-        $import_from_template = get_option( 'import_design_from_template' );
-        $is_checked = ($import_from_template === '1') ? 'checked' : ''; // Ensure that it's a string comparison
         ?>
         <div class="templateWrap">
             <h1><?php _e('Seat Plan Templates', 'textdomain'); ?></h1>
-
-            <!-- Checkbox with custom styling -->
-
-            <label class="importFromPrevCheckbox">
-                <input type="checkbox" name="importFromTemplate" id="importFromTemplate" <?php echo $is_checked; ?>>
-                <span class="checkmark"></span>
-                <?php _e('Import From Template', 'textdomain'); ?>
-            </label>
 
             <span class="importSeatPlan"><?php _e('Select any template, then click "Save Selection." After saving, go to create a new item.', 'textdomain'); ?></span>
 
@@ -178,7 +240,7 @@ class CustomPostAjaxMetaSave {
                     <table class="widefat fixed striped">
                         <thead>
                         <tr>
-                            <th><?php _e('Title', 'textdomain'); ?></th>
+<!--                            <th>--><?php //_e('Title', 'textdomain'); ?><!--</th>-->
                             <th><?php _e('Date', 'textdomain'); ?></th>
                             <th><?php _e('Actions', 'textdomain'); ?></th>
                             <th><?php _e('Select', 'textdomain'); ?></th>
@@ -187,7 +249,7 @@ class CustomPostAjaxMetaSave {
 
                         <tbody>
                         <?php while ($query->have_posts()) : $query->the_post(); ?>
-                            <tr>
+                            <tr class="templates">
                                 <td>
                                     <?php
                                     $title = get_the_title();
@@ -195,13 +257,14 @@ class CustomPostAjaxMetaSave {
                                     ?>
                                 </td>
                                 <td><?php echo get_the_date(); ?></td>
-                                <td>
+                                <td id="<?php echo get_the_ID()?>">
                                     <a href="<?php echo get_edit_post_link(); ?>"><?php _e('Edit', 'textdomain'); ?></a> |
-                                    <a href="<?php echo get_permalink(); ?>" target="_blank"><?php _e('View', 'textdomain'); ?></a>
+                                    <a href="<?php echo get_permalink(); ?>" target="_blank"><?php _e('View', 'textdomain'); ?></a> |
+                                    <span class="removeFromTemplate" ><?php _e('Remove', 'textdomain'); ?></span>
                                 </td>
-                                <td>
-                                    <input type="radio" name="selected_template" value="<?php echo get_the_ID(); ?>"/>
-                                </td>
+                                <!--<td>
+                                    <input type="radio" name="selected_template" value="<?php /*echo get_the_ID(); */?>"/>
+                                </td>-->
                             </tr>
                         <?php endwhile; ?>
                         </tbody>
@@ -222,10 +285,6 @@ class CustomPostAjaxMetaSave {
                         ]);
                         ?>
                     </div>
-
-                    <p>
-                        <input type="submit" name="submit_template" class="button-primary" value="<?php _e('Save Selection', 'textdomain'); ?>">
-                    </p>
                 <?php else : ?>
                     <p><?php _e('No templates found.', 'textdomain'); ?></p>
                 <?php endif; ?>
@@ -237,18 +296,7 @@ class CustomPostAjaxMetaSave {
         </div>
 
         <?php
-        // Handle form submission if the form was posted
-        if (isset($_POST['submit_template']) && isset($_POST['selected_template'])) {
-            $selected_template_id = intval($_POST['selected_template']);
-            update_option('selected_seat_plan_template', $selected_template_id);
-
-            echo '<div class="notice notice-success is-dismissible">';
-            echo '<p>' . __('Template selected successfully!', 'textdomain') . '</p>';
-            echo '</div>';
-        }
     }
-
-
 
     public function render_settings_page(){ ?>
         <div class="wrap">
@@ -260,12 +308,18 @@ class CustomPostAjaxMetaSave {
 
     public function render_meta_box( $post ) {
 
-        $import_from_template = get_option( 'import_design_from_template' );
+        /*$import_from_template = get_option( 'import_design_from_template' );
         $is_checked = ($import_from_template === '1') ? 1 : 0;
 
         $load_from_template = get_option( 'selected_seat_plan_template' );
         if( $is_checked === 1 && $load_from_template ){
             $post_id = $load_from_template;
+        }else{
+            $post_id = $post->ID;
+        }*/
+
+        if( isset( $_GET['templateId'] ) ){
+            $post_id = $_GET['templateId'];
         }else{
             $post_id = $post->ID;
         }
@@ -291,10 +345,19 @@ class CustomPostAjaxMetaSave {
                 <button class="drag_drop" id="enable_drag_drop" style="display: none">Drag & Drop</button>
                 <button class="removeSelected" id="removeSelected">Erase</button>
                 <button id="setTextnew" class="setTextnew">Set Text</button>
+                <button id="importFromTemplatePopUp" class="importFromTemplatePopUp">Import From Template </button>
+
+<!--                <div class="importFromTemplate"><span class=""></span></div>-->
             </div>
 
         </div>
-        <div class="seatContentHolder">
+        <div class="seatContentHolder" id="seatContentHolder">
+            <div id="popupContainer" class="popup">
+                <div class="popupContent">
+                    <span id="closePopup" class="close">&times;</span>
+                    <div id="popupInnerContent"></div>
+                </div>
+            </div>
         <div class="seatPlanHolder">
         <!--        <div id="seat-grid" class="seat-grid"></div>-->
         <?php
@@ -338,12 +401,8 @@ class CustomPostAjaxMetaSave {
         $parent_width = $columns * ($childWidth + $gap) - $gap;
         $parent_height =$rows * ($childHeight + $gap) - $gap;
 
-        echo '<div class="parentDiv" id="parentDiv" style="position: absolute; width: ' .$parent_width . 'px; height: ' . $parent_height . 'px;"><div id="popupContainer" class="popup">
-                  <div class="popupContent">
-                      <span id="closePopup" class="close">&times;</span>
-                      <div id="popupInnerContent"></div>
-                  </div>
-              </div>';
+        echo '<div class="parentDiv" id="parentDiv" style="position: absolute; width: ' .$parent_width . 'px; height: ' . $parent_height . 'px;">
+                ';
         if ( is_array( $dynamic_shapes ) && count( $dynamic_shapes ) > 0 ) {
             foreach ( $dynamic_shapes as $dynamic_shape ) {
                 $shape_rotate_deg = isset( $dynamic_shape['shapeRotateDeg'] ) ? $dynamic_shape['shapeRotateDeg'] : 0;
@@ -508,7 +567,8 @@ class CustomPostAjaxMetaSave {
                 </div>
                 
                 <button id="clearAll"> All Clear</button>
-                <button id="savePlan">Save Plan</button>
+                <button class="savePlan" id="savePlan">Save Plan</button>
+                <button class="savePlan" id="savePlanAsTemplate">Save Plan with Template</button>
                 <button id="setTextPlan" class="setTextPlan" style="display: none">Set text</button>
                 <div class="setPriceColorHolder" id="setPriceColorHolder" style="display: none">
                     <div class="rotateControls">

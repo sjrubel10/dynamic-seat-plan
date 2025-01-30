@@ -33,7 +33,51 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $(document).on('click', '#enable_resize', function ( e ) {
+    $(document).on('click', '#importFromTemplatePopUp', function ( e ) {
+        e.preventDefault();
+        let postId = $(this).parent().parent().attr('id');
+        $.ajax({
+            url: ajax_object.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'render_manage_seat_templates_for_import',
+                nonce: ajax_object.nonce,
+                paged: 1,
+                postId: postId,
+            },
+            success: function (response) {
+                if (response.success) {
+                    let popUp = '<div id="templatePopupContainer" class="popup">\
+                                            <div class="templatePopupContent">\
+                                                <span id="templatePopupClose" class="templatePopupClose">&times;</span>\
+                                                <div id="popupInnerContent">'+response.data+'\
+                                                </div>\
+                                            </div>\
+                                        </div>';
+                    $("#seatContentHolder").append( popUp );
+                } else {
+                    alert('Failed to load templates.');
+                }
+            },
+            error: function () {
+                alert('An error occurred.');
+            },
+        });
+
+        $('#templatePopupContainer').show();
+
+    });
+
+    $(document).on('click', '.templateLinks', function (e) {
+        e.preventDefault();
+        const $this = $(this);
+        $this.addClass('focus-out');
+        setTimeout(function () {
+            window.location.href = $this.attr('href');
+        }, 500);
+    });
+
+    $(document).on('click', '#enable_resize', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_resize_selected');
         if( !$(this).hasClass( 'enable_resize_selected' )){
@@ -562,6 +606,11 @@ jQuery(document).ready(function ($) {
     $('#closePopup').click(function () {
         $('#popupContainer').fadeOut(); // Hide popup
     });
+    $(document).on( 'click', '#templatePopupClose', function (e) {
+        e.preventDefault();
+        $('#templatePopupContainer').fadeOut(); // Hide popup
+        $('#templatePopupContainer').remove();
+    });
     // Close popup when clicking outside the popup content
     $('#popupContainer').click(function (event) {
         if ($(event.target).is('#popupContainer')) {
@@ -778,13 +827,20 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    $('#savePlan').on('click', function (e) {
+    $('.savePlan').on('click', function (e) {
         e.preventDefault();
         /*const planName = $('#plan-name').val();
         if (!planName) {
             alert('Please enter a plan name!');
             return;
         }*/
+
+        let clickedId = $(this).attr('id');
+        let template = '';
+        if( clickedId === 'savePlanAsTemplate'){
+            template = 'template'
+        }
+
         var seatPlanTexts = [];
         var selectedSeats = [];
         var dynamicShapes = [];
@@ -836,21 +892,7 @@ jQuery(document).ready(function ($) {
             alert('No seats selected to save!');
             return;
         }
-        // selectedSeats.sort((a, b) => a.col - b.col);
         const postId = $('#plan_id').val();
-        /*$.ajax({
-            url: 'save_plan.php',
-            type: 'POST',
-            data: { planName, selectedSeats },
-            success: function (response) {
-                alert('Plan saved successfully!');
-                loadPlans(); // Reload saved plans
-                selectedSeats = [];
-            },
-            error: function (xhr, status, error) {
-                console.error(error);
-            }
-        });*/
         $.ajax({
             url: ajax_object.ajax_url,
             type: 'POST',
@@ -862,6 +904,7 @@ jQuery(document).ready(function ($) {
                 seatPlanTexts: seatPlanTexts,
                 seatIcon: seatIconName,
                 dynamicShapes: dynamicShapes,
+                template: template,
             },
             success: function (response) {
                 if (response.success) {
