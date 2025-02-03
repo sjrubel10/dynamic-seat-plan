@@ -540,7 +540,8 @@
     position: absolute;
     z-index: 30;
     cursor: move;
-    /*border: 1px solid #000; !* Optional: for visibility *!*/
+    box-shadow: 0 3px 9pt rgba(0, 0, 0, .23), 0 3px 9pt rgba(0, 0, 0, .16);
+    /*border: 1px solid #b3adad5c; !* Optional: for visibility *!*/
 }
 .dynamicShapeHolder{
     display: none;
@@ -595,6 +596,32 @@
     max-width: 200px;
     display: none;
 }
+
+.featureImagesHolder{
+    width: 100%;
+    display: block;
+    float: left;
+    position: relative;
+}
+.featureImages{
+    display: block;
+    width: calc(100% - 20px);
+    height: 80px;
+    margin: auto;
+    border-radius: 3px;
+}
+
+.templateLinks{
+    display: block;
+    float: left;
+    position: relative;
+    padding: 5px 1px;
+    width: 100%;
+    overflow: hidden;
+    color: #666666;
+    font-size: 16px;
+    line-height: 16px;
+}
 /* Popup content box */
 .popupContent {
     position: relative;
@@ -628,6 +655,9 @@
     padding: 5px;
     border-radius: 3px;
     cursor: pointer;
+}
+.templateSelected{
+    border: 2px dashed #5b5757;
 }
 .plus, .minus{
     cursor: pointer;

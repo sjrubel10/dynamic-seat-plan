@@ -1,5 +1,32 @@
 jQuery(document).ready(function ($) {
 
+    var frame;
+    $('.upload-feature-image-button').click(function(e) {
+        e.preventDefault();
+        if (frame) {
+            frame.open();
+            return;
+        }
+        frame = wp.media({
+            title: 'Select or Upload Feature Image',
+            button: { text: 'Use this image' },
+            multiple: false
+        });
+        frame.on('select', function() {
+            var attachment = frame.state().get('selection').first().toJSON();
+            $('#custom-feature-image-url').val(attachment.url);
+            $('.custom-feature-image-preview').html('<img src="' + attachment.url + '" style="max-width: 100%; margin-bottom: 10px;">');
+            $('.remove-feature-image-button').show();
+        });
+        frame.open();
+    });
+    $('.remove-feature-image-button').click(function(e) {
+        e.preventDefault();
+        $('#custom-feature-image-url').val('');
+        $('.custom-feature-image-preview').html('');
+        $(this).hide();
+    });
+
     $('#uploadButton').on('click', function ( e ) {
         e.preventDefault();
         let fileInput = $('#iconUpload')[0].files[0];
@@ -31,6 +58,33 @@ jQuery(document).ready(function ($) {
                 alert('An error occurred while uploading the icon.');
             },
         });
+    });
+
+    let templates = [];
+    $(document).on('click', '.templates', function ( e ) {
+        e.preventDefault();
+        let templateId = $(this).attr( 'id' );
+        $(this).toggleClass('templateSelected');
+        let postIds =  templateId.split('-');
+        let postId = postIds[1];
+        if( $(this).hasClass( 'templateSelected') ){
+            templates.push( postId );
+        }else{
+            templates = templates.filter(function (item) {
+                return item !== postId;
+            });
+        }
+    });
+
+    $(document).on('click', '.openAsTemplate', function ( e ) {
+
+        e.preventDefault();
+        let original_posts = $(this).attr('id');
+        let original_post = original_posts.replace('open_', '');
+        if( templates.length > 0 ){
+            let postIds = templates.join("_");
+            window.location.href = `${ajax_object.site_url}/wp-admin/post.php?post=${original_post}&action=edit&templateId=${postIds}`;
+        }
     });
 
     $(document).on('click', '#importFromTemplatePopUp', function ( e ) {
