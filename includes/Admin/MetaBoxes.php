@@ -303,13 +303,20 @@ class MetaBoxes{
                     </div>
                     <div class="seatIconContainer">
                         <span class="seatIconTitle">Select seat icon</span>
-                        <div class="seatIconHolder">
+                        <div class="seatIconHolder" id="seatIconHolder">
                             <img class="seatIcon" id="icon2" src="'.SEAT_Plan_ASSETS.'images/icons/icon2.png"/>
                             <img class="seatIcon" id="seat1" src="'.SEAT_Plan_ASSETS.'images/icons/seat1.png"/>
                             <img class="seatIcon" id="chairdown" src="'.SEAT_Plan_ASSETS.'images/icons/chairdown.png"/>
                             <img class="seatIcon" id="shofa1" src="'.SEAT_Plan_ASSETS.'images/icons/shofa1.png"/>
                             <img class="seatIcon" id="shofa2" src="'.SEAT_Plan_ASSETS.'images/icons/shofa2.png"/>
+                            <img class="seatIcon" id="chairleft" src="'.SEAT_Plan_ASSETS.'images/icons/chairleft.png"/>
                             <img alt="No" class="seatIcon" id="seatnull" src="'.SEAT_Plan_ASSETS.'images/icons/remove.png"/>
+                            <div class="seat-icon-upload-container" style="display: block">
+                              <label for="seatIconUpload" class="seat-icon-upload-label">
+                                <img src="'.SEAT_Plan_ASSETS.'images/icons/uploadIcon.png" alt="Upload Icon" class="seat-icon-image">
+                              </label>
+                              <input class="seatIconUpload" type="file" id="seatIconUpload" name="filename">
+                            </div>
                         </div>
                     </div>
                     <div class="movementHolder" id="movementHolder">

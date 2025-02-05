@@ -16,7 +16,82 @@ class Ajax{
 
         add_action('wp_ajax_remove_from_templates',[ $this,  'remove_from_templates']);
 
+        add_action('wp_ajax_image_upload', [ $this,'handle_image_upload' ] );
+        add_action('wp_ajax_nopriv_image_upload', [ $this,'handle_image_upload' ] );
+
     }
+
+
+    function handle_image_upload_old() {
+//        check_ajax_referer('image_upload_nonce', 'nonce');
+
+        if (!empty($_FILES['image'])) {
+            $file = $_FILES['image'];
+
+            $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
+            if (!in_array($file['type'], $allowed_types)) {
+                wp_send_json_error(['message' => 'Invalid file type.']);
+            }
+
+            $assets_dir = SEAT_Plan_PATH . '/assets/images/icons/seatIcons';
+
+            if ( !file_exists($assets_dir ) ) {
+                wp_mkdir_p($assets_dir);
+            }
+
+            $target_file = $assets_dir . '/' . basename($file['name']);
+            error_log( print_r( [ ' tmp_name' =>  $file['tmp_name'] ], true ) );
+
+            if ( move_uploaded_file( $file['tmp_name'], $target_file ) ) {
+                $file_url = SEAT_Plan_ASSETS . 'images/icons/seatIcons/' . basename($file['name']);
+
+                wp_send_json_success(['message' => 'Image uploaded successfully!', 'file_url' => $file_url]);
+            } else {
+                wp_send_json_error(['message' => 'Failed to move the uploaded file.']);
+            }
+        } else {
+            wp_send_json_error(['message' => 'No file uploaded.']);
+        }
+    }
+
+    function handle_image_upload() {
+        // check_ajax_referer('image_upload_nonce', 'nonce');
+
+        if (!empty($_FILES['image'])) {
+            $file = $_FILES['image'];
+            error_log( print_r( [ '$file' =>  $file ], true ) );
+
+            $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
+            if (!in_array($file['type'], $allowed_types)) {
+                wp_send_json_error(['message' => 'Invalid file type.']);
+            }
+
+            $assets_dir = SEAT_Plan_PATH . '/assets/images/icons/seatIcons';
+
+            if (!file_exists($assets_dir)) {
+                wp_mkdir_p($assets_dir);
+            }
+
+            $timestamp = time();
+            $unique_name = substr( hash('sha256', $timestamp ), 0, 12 );
+            $file_extension = pathinfo( $file['name'], PATHINFO_EXTENSION );
+            $new_file_name = $unique_name . '.' . $file_extension;
+
+            $target_file = $assets_dir . '/' . $new_file_name;
+
+            if (move_uploaded_file( $file['tmp_name'], $target_file ) ) {
+                $file_url = SEAT_Plan_ASSETS . 'images/icons/seatIcons/' . $new_file_name;
+
+                wp_send_json_success( [ 'message' => 'Image uploaded successfully!', 'file_url' => $file_url, 'image_name' => $unique_name ] );
+            } else {
+                wp_send_json_error( [ 'message' => 'Failed to move the uploaded file.' ] );
+            }
+        } else {
+            wp_send_json_error( [ 'message' => 'No file uploaded.' ] );
+        }
+    }
+
+
 
     public function remove_from_templates(){
         $template_id = isset($_POST['templateId']) ? absint($_POST['templateId']) : '';

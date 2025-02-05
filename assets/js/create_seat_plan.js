@@ -1533,8 +1533,6 @@ jQuery(document).ready(function ($) {
         };
 
     });
-
-
     function set_plan_text( e ){
         const parentOffset = $('.parentDiv').offset();
         const x = e.pageX - parentOffset.left;
@@ -1647,7 +1645,6 @@ jQuery(document).ready(function ($) {
                 $(this).data("textInitialized", true);
             }
         } else {
-            // Hide the color holder if the shape is deselected
             $(".dynamicTextControlHolder").hide();
         }
 
@@ -1661,7 +1658,6 @@ jQuery(document).ready(function ($) {
         e.stopPropagation();
         const $this = $(this);
 
-        // Toggle selection
         if ($this.hasClass("textSelected")) {
             $(".dynamicTextControlHolder").hide();
             $this.removeClass("textSelected");
@@ -1674,7 +1670,6 @@ jQuery(document).ready(function ($) {
             selectedTextDraggableDivs.push($this);
         }
 
-        // Make the clicked element draggable
         $(this).draggable({
             containment: "#parentDiv",
             start: function () {
@@ -1705,7 +1700,6 @@ jQuery(document).ready(function ($) {
                     );
                 }
                 console.log("Drag operation stopped.");
-                // Add any additional stop logic here
             }, 300),
         });
     });
@@ -1720,6 +1714,54 @@ jQuery(document).ready(function ($) {
         };
     }
     //End
+
+    /*$(document).on('change', '#seatIconUpload', function () {
+        const file = this.files[0];
+        const imageInfoDiv = $('#seatIconUpload');
+
+        if (file) {
+            const fileName = file.name;
+            const fileSize = (file.size / 1024).toFixed(2);
+            const fileType = file.type;
+
+        } else {
+            imageInfoDiv.html('<p>No file selected.</p>');
+        }
+    });*/
+
+    $(document).on('change', '#seatIconUpload', function () {
+        const file = this.files[0];
+        const formData = new FormData();
+
+        if ( file ) {
+            formData.append('image', file);
+            formData.append('action', 'image_upload');
+            formData.append('nonce', ajax_object.nonce);
+            $.ajax({
+                url: ajax_object.ajax_url,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        let image_link = `<img class="seatIcon" id="${response.data.image_name}" src="${response.data.file_url}" alt="Uploaded Image">`;
+                        $('#seatIconHolder').prepend( image_link );
+                    } else {
+                        alert(response.data.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while uploading the image.');
+                },
+            });
+        } else {
+            alert('No file selected.');
+        }
+    });
+
+
 
 
 });

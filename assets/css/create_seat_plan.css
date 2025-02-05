@@ -15,7 +15,7 @@
     display: block;
     width: 150px;
     margin-left: 10px;
-    padding: 10px;
+    /*padding: 10px 0px;*/
 }
 #parentDiv {
     border: 1px solid #e9e4e4;
@@ -519,11 +519,13 @@
 .seatTextControl{
     display: none;
 }
+
 .seatIconHolder{
     display: flex;
     flex-wrap: wrap;
     width: 100%;
-    gap: 3px;
+    gap: 2px;
+    /*background-color: #990000;*/
 }
 .seatIcon{
     width: 25px;
@@ -910,3 +912,36 @@ button.zoom-in:hover, button.zoom-out:hover {
     opacity: 0.8;
 }
 
+
+
+
+/* Hide the actual file input */
+.seatIconUpload {
+    display: none;
+}
+
+/* Style the label to look like an image */
+.seat-icon-upload-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.seat-icon-upload-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.seat-icon-image {
+    width: 27px;
+    height: 27px;
+    object-fit: cover;
+    /*border: 1px solid #ccc;*/
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 3px;
+}
+
+.seat-icon-image:hover {
+    transform: scale(1.05); /* Slight zoom effect on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Adds a shadow */
+}
