@@ -424,11 +424,9 @@ jQuery(document).ready(function ($) {
         $(".dynamicShapeColorHolder").hide();
         $(".dynamicTextControlHolder").hide();
     }
-    // Handle selection
     let seat_num = 0;
-    $(".childDiv").on("click", function (e) {
+    $(document).on( "click", ".childDiv", function (e) {
         hide_remove_shape_text_sellection();
-        // e.stopPropagation();
         e.preventDefault();
         const $this = $(this);
         let seatDivId = $this.attr('id');
@@ -444,9 +442,6 @@ jQuery(document).ready(function ($) {
             selectionOrder = [];
             forReverse = [];
             make_rotate( $(this).attr('id') );
-            /*if ($('#make_circle').hasClass('circleSelected')) {
-                $(this).css('border-radius', '50%');
-            }*/
         }else{
             if( $this.hasClass('save') && $('#set_multiselect').hasClass('enable_set_multiselect' ) && !$('#set_seat').hasClass('enable_set_seat' ) ){
                 $this.toggleClass("selected");
@@ -516,13 +511,7 @@ jQuery(document).ready(function ($) {
                         }, 300)
                     });
                 }
-            /*} else{
-                if ($this.data("ui-resizable")) {
-                    $this.resizable("destroy");
-                }
-            }*/
 
-            // if( $('#enable_drag_drop').hasClass( 'enable_drag_drop' )) {
                 $(this).draggable({
                     containment: "#parentDiv",
                     drag: function (event, ui) {
@@ -581,6 +570,8 @@ jQuery(document).ready(function ($) {
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            removed_seat_data( $(this) );
+            $("#undo").show();
             $(this).removeClass('save');
             $(this).removeClass('selected');
             $(this).css({
@@ -594,12 +585,222 @@ jQuery(document).ready(function ($) {
 
             $this.text('');
         }
+        console.log($(this));
 
         if( selectedDivs.length > 0 ){
             $('#setPriceColorHolder').fadeIn( 1000 );
         }else{
             $('#setPriceColorHolder').fadeOut();
         }
+    });
+
+    var removedData = [];
+    function removed_seat_data( div ){
+        const id = div.data('id');
+        const row = div.data('row');
+        const col = div.data('col');
+        const backgroundImage = div.data('background-image');
+        const seat_number = div.data('seat-num');
+        const data_degree = div.data('degree');
+        const color = div.css('background-color');
+        const price = div.data('price') || 0;
+        const width =div.css('width') || 0;
+        const height = div.css('height') || 0;
+        const z_index = div.css('z-index') || 0;
+        const left = div.css('left') || 0;
+        const top = div.css('top') || 0;
+        const border_radius = div.css('border-radius') || 0;
+        const seatText =div.find('.seatText').text();
+        const boxType = 'seats';
+        removedData.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText, backgroundImage, boxType });
+    }
+
+    function removed_shape_data( div, is_erase = '' ){
+        const shapeLeft = parseInt(div.css('left')) || 0;
+        const shapeTop = parseInt(div.css('top')) || 0;
+        const shapeWidth = parseInt(div.css('width')) || 0;
+        const shapeHeight = parseInt(div.css('height')) || 0;
+        const shapeBackgroundColor = div.css('background-color') || '';
+        const shapeBorderRadius = div.css('border-radius') || '';
+        const shapeClipPath = div.css('clip-path') || '';
+        const shapeRotateDeg = div.data('shape-rotate') || 0;
+        const boxType = 'shapes';
+        if( is_erase === 'copy' ){
+            copyData.push({ shapeLeft, shapeTop, shapeWidth, shapeHeight, shapeBackgroundColor, shapeBorderRadius, shapeClipPath, shapeRotateDeg, boxType });
+        }else{
+            removedData.push({ shapeLeft, shapeTop, shapeWidth, shapeHeight, shapeBackgroundColor, shapeBorderRadius, shapeClipPath, shapeRotateDeg, boxType });
+        }
+
+    }
+    function removed_text_data( div ){
+        const textLeft = parseInt(div.css('left')) || 0;
+        const textTop = parseInt(div.css('top')) || 0;
+        const class_name = '';
+        const color = div.children('.dynamic-text' ).css('color') || '';
+        const fontSize = div.children('.dynamic-text').css('font-size') || '';
+        const text = div.children('.dynamic-text').text() || '';
+        const textRotateDeg = div.data('text-degree') || 0;
+        const boxType = 'texts';
+        removedData.push({ textLeft, textTop, class_name, color, fontSize, text, textRotateDeg, boxType});
+    }
+
+    function undo_data_display( removedData ){
+        var lastElementData = {};
+        let html = '';
+        if( removedData.length > 0 ){
+            $.each( removedData, function( index, value ) {
+                lastElementData = value;
+            });
+            removedData.pop();
+            if( lastElementData.boxType === 'seats' ){
+                html = `<div class="childDiv save" id="div_${lastElementData.id}" 
+                          data-id="${lastElementData.id}" 
+                          data-row="${lastElementData.row}" 
+                          data-col="${lastElementData.col}" 
+                          data-seat-num="${lastElementData.seat_number}" 
+                          data-price="${lastElementData.price}" 
+                          data-degree="${lastElementData.data_degree}" 
+                          data-background-image="${lastElementData.backgroundImage}" 
+                          style="
+                              left: ${lastElementData.left}; 
+                              top: ${lastElementData.top}; 
+                              width: ${lastElementData.width}; 
+                              height: ${lastElementData.height}; 
+                              background-color: ${lastElementData.color}; 
+                              background-image: url('http://localhost/mage_people/wp-content/plugins/dynamic-seat-plan/assets/images/icons/seatIcons/${lastElementData.backgroundImage}.png'); 
+                              z-index: ${lastElementData.z_index}; 
+                              transform: rotate(${lastElementData.data_degree}deg);
+                              border-radius: ${lastElementData.border_radius};
+                          ">
+                          <div class="tooltip" style="display: none; z-index: 999;">Price: ${lastElementData.price}</div>
+                          <div class="seatNumber" id="seatNumber_${lastElementData.id}" style="display: block;">${lastElementData.seat_number}</div>
+                      </div>`;
+            }else if( lastElementData.boxType === 'shapes' ){
+                html = `<div class="dynamicShape ui-draggable ui-draggable-handle ui-resizable" 
+                            data-shape-rotate="${lastElementData.shapeRotateDeg}" 
+                            style="
+                                left: ${lastElementData.shapeLeft}px; 
+                                top: ${lastElementData.shapeTop}px; 
+                                width: ${lastElementData.shapeWidth}px; 
+                                height:${lastElementData.shapeHeight}px;
+                                transform: rotate(${lastElementData.shapeRotateDeg}deg);
+                                clip-path: ${lastElementData.shapeClipPath};
+                                background-color: ${lastElementData.shapeBackgroundColor}; 
+                                border-radius: ${lastElementData.shapeBorderRadius};
+                                "
+                            >
+                            <div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div>
+                            <div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div>
+                            <div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div>
+                        </div>`;
+            }else if( lastElementData.boxType === 'texts' ){
+                html = `
+                <div class="text-wrapper" data-text-degree="${lastElementData.textRotateDeg}" 
+                    style="
+                        position: absolute; 
+                        left: ${lastElementData.textLeft}px; 
+                        top: ${lastElementData.textTop}px; 
+                        transform: rotate(${lastElementData.textRotateDeg}deg);">
+                     <span class="dynamic-text" 
+                        style="
+                            display: block; 
+                            color: ${lastElementData.color}; 
+                            font-size: ${lastElementData.fontSize};
+                            cursor: pointer;">
+                            ${lastElementData.text}
+                    </span>
+                </div>
+                `;
+            }
+
+            $("#parentDiv").append(html);
+        }else{
+            $("#undo").hide();
+        }
+    }
+    function copy_data_display( removedData, e ){
+        let copy_paste_html = '';
+        let lastElementData = {};
+        const parentOffset = $('.parentDiv').offset();
+        const x_axis = e.pageX - parentOffset.left;
+        const y_axis = e.pageY - parentOffset.top;
+
+        // console.log( removedData );
+        if( removedData.length > 0 ){
+            $.each( removedData, function( index, value ) {
+                lastElementData = value;
+            });
+            removedData.pop();
+            if( lastElementData.boxType === 'seats' ){
+                copy_paste_html = `<div class="childDiv save" id="div_${lastElementData.id}" 
+                          data-id="${lastElementData.id}" 
+                          data-row="${lastElementData.row}" 
+                          data-col="${lastElementData.col}" 
+                          data-seat-num="${lastElementData.seat_number}" 
+                          data-price="${lastElementData.price}" 
+                          data-degree="${lastElementData.data_degree}" 
+                          data-background-image="${lastElementData.backgroundImage}" 
+                          style="
+                              left: ${x_axis}px; 
+                              top: ${y_axis}px;  
+                              width: ${lastElementData.width}; 
+                              height: ${lastElementData.height}; 
+                              background-color: ${lastElementData.color}; 
+                              background-image: url('http://localhost/mage_people/wp-content/plugins/dynamic-seat-plan/assets/images/icons/seatIcons/${lastElementData.backgroundImage}.png'); 
+                              z-index: ${lastElementData.z_index}; 
+                              transform: rotate(${lastElementData.data_degree}deg);
+                              border-radius: ${lastElementData.border_radius};
+                          ">
+                          <div class="tooltip" style="display: none; z-index: 999;">Price: ${lastElementData.price}</div>
+                          <div class="seatNumber" id="seatNumber_${lastElementData.id}" style="display: block;">${lastElementData.seat_number}</div>
+                      </div>`;
+            }
+            else if( lastElementData.boxType === 'shapes' ){
+                copy_paste_html = `<div class="dynamicShape ui-draggable ui-draggable-handle ui-resizable" 
+                            data-shape-rotate="${lastElementData.shapeRotateDeg}" 
+                            style="
+                                left: ${x_axis}px; 
+                                top: ${y_axis}px; 
+                                width: ${lastElementData.shapeWidth}px; 
+                                height:${lastElementData.shapeHeight}px;
+                                transform: rotate(${lastElementData.shapeRotateDeg}deg);
+                                clip-path: ${lastElementData.shapeClipPath};
+                                background-color: ${lastElementData.shapeBackgroundColor}; 
+                                border-radius: ${lastElementData.shapeBorderRadius};
+                                "
+                            >
+                            <div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div>
+                            <div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div>
+                            <div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div>
+                        </div>`;
+            }
+            else if( lastElementData.boxType === 'texts' ){
+                copy_paste_html = `
+                <div class="text-wrapper" data-text-degree="${lastElementData.textRotateDeg}" 
+                    style="
+                        position: absolute; 
+                        left: ${x_axis}px; 
+                        top: ${y_axis}px;  
+                        transform: rotate(${lastElementData.textRotateDeg}deg);">
+                     <span class="dynamic-text" 
+                        style="
+                            display: block; 
+                            color: ${lastElementData.color}; 
+                            font-size: ${lastElementData.fontSize};
+                            cursor: pointer;">
+                            ${lastElementData.text}
+                    </span>
+                </div>
+                `;
+            }
+
+            $("#parentDiv").append( copy_paste_html );
+        }
+    }
+
+    $(document).on( 'click', '#undo', function (e) {
+        e.preventDefault();
+        undo_data_display( removedData );
 
     });
 
@@ -930,6 +1131,7 @@ jQuery(document).ready(function ($) {
             const textRotateDeg = $(this).data('text-degree') || 0;
             seatPlanTexts.push({ text, class_name, textLeft, textTop, color, fontSize, textRotateDeg});
         });
+
         $('.dynamicShape').each(function () {
             const textLeft = parseInt($(this).css('left')) || 0;
             const textTop = parseInt($(this).css('top')) || 0;
@@ -1007,35 +1209,9 @@ jQuery(document).ready(function ($) {
             alert('No seats selected to save!');
             return;
         }
-        // selectedSeats.sort((a, b) => a.col - b.col);
 
-
-        /*$.ajax({
-            url: ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'save_custom_meta_data',
-                nonce: ajax_object.nonce,
-                post_id: postId,
-                custom_field_1: 'selectedSeats',
-            },
-            success: function (response) {
-                if (response.success) {
-                    alert('Meta data saved successfully!');
-                    $('#post').off('submit').submit();
-                } else {
-                    alert('Error: ' + response.data.message);
-                }
-            },
-            error: function () {
-                alert('An unexpected error occurred.');
-            }
-        });*/
     });
 
-    // Save positions to server
-
-    // Debounce function to optimize frequent calls
     function debounce(func, wait) {
         let timeout;
         return function (...args) {
@@ -1272,7 +1448,6 @@ jQuery(document).ready(function ($) {
             }
         });
     }
-
     multiSeat_Creation();
 
     //Hover option
@@ -1310,6 +1485,12 @@ jQuery(document).ready(function ($) {
             $("#parentDiv").find('.dynamicShape').removeClass('selectedShape');
             make_shape( e, selectShape );
         }
+
+        if( copyData.length > 0 ){
+            copy_data_display( copyData, e );
+        }
+
+
     });
 
     $('#setShapeColor').on('input', function ( e ) {
@@ -1320,9 +1501,20 @@ jQuery(document).ready(function ($) {
 
     $("#removeDynamicShape").on("click", function (e) {
         e.preventDefault();
+        let this_shape = $("#parentDiv").find('.dynamicShape.selectedShape');
+        removed_shape_data( this_shape, 'erase' );
         const color = $("#setShapeColor").val();
         if (color)  $("#parentDiv").find('.dynamicShape.selectedShape').remove();
         $(".dynamicShapeColorHolder").hide();
+    });
+
+    var copyData = [];
+    $(document).on("click", ".copyStore", function (e) {
+        copyData = [];
+        e.preventDefault();
+        let getShapeData = $("#parentDiv").find('.dynamicShape.selectedShape');
+        removed_shape_data( getShapeData, 'copy' );
+        console.log( copyData );
     });
 
     $(document).on("click", ".shapeRotate", function (e) {
@@ -1364,6 +1556,9 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         e.stopPropagation();
         const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
+
+        const textDiv = $("#parentDiv").find('.text-wrapper.textSelected');
+        removed_text_data( textDiv );
         dynamicText.parent().remove();
     });
 
@@ -1452,7 +1647,7 @@ jQuery(document).ready(function ($) {
                 console.warn('Invalid shape_type:', shape_type);
                 return;
         }
-        const shape = $('<div class="dynamicShape" date-shape-rotate="0"></div>').css({
+        const shape = $('<div class="dynamicShape" data-shape-rotate="0"></div>').css({
             left: x + 'px',
             top: y + 'px',
             width: width + 'px',
@@ -1529,6 +1724,7 @@ jQuery(document).ready(function ($) {
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            removed_shape_data( $(this), 'erase' );
             $(this).remove();
         };
 
@@ -1649,59 +1845,9 @@ jQuery(document).ready(function ($) {
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
+            removed_text_data( $(this) );
             $(this).remove();
         };
-    });
-
-    $(document).on("click",".text-wrapper_old", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const $this = $(this);
-
-        if ($this.hasClass("textSelected")) {
-            $(".dynamicTextControlHolder").hide();
-            $this.removeClass("textSelected");
-            selectedTextDraggableDivs = selectedTextDraggableDivs.filter(
-                (div) => div[0] !== $this[0]
-            );
-        } else {
-            $(".dynamicTextControlHolder").show();
-            $this.addClass("textSelected");
-            selectedTextDraggableDivs.push($this);
-        }
-
-        $(this).draggable({
-            containment: "#parentDiv",
-            start: function () {
-                isTextDragging = true;
-            },
-            drag: function (event, ui) {
-                const current = $(this);
-                const offsetX = ui.position.left - current.position().left;
-                const offsetY = ui.position.top - current.position().top;
-
-                if (isTextDragging && selectedTextDraggableDivs.length > 0) {
-                    selectedTextDraggableDivs.forEach((div) => {
-                        if (div[0] !== current[0]) {
-                            div.css({
-                                top: div.position().top + offsetY + "px",
-                                left: div.position().left + offsetX + "px",
-                            });
-                        }
-                    });
-                }
-            },
-            stop: textDragDebounce(function () {
-                isDragging = false;
-                if ($this.hasClass("textSelected")) {
-                    $this.removeClass("textSelected");
-                    selectedTextDraggableDivs = selectedTextDraggableDivs.filter(
-                        (div) => div[0] !== $this[0]
-                    );
-                }
-                console.log("Drag operation stopped.");
-            }, 300),
-        });
     });
 
 // Debounce function definition
@@ -1760,8 +1906,6 @@ jQuery(document).ready(function ($) {
             alert('No file selected.');
         }
     });
-
-
 
 
 });

@@ -38,6 +38,9 @@ class MetaBoxes{
                 <button class="removeSelected" id="removeSelected">Erase</button>
                 <button id="setTextnew" class="setTextnew">Set Text</button>
                 <button id="importFromTemplatePopUp" class="importFromTemplatePopUp">Import From Template </button>
+                <button id="undo" class="undo">Undo </button>
+
+
 
 <!--                <div class="importFromTemplate"><span class=""></span></div>-->
             </div>
@@ -116,7 +119,7 @@ class MetaBoxes{
             if ( is_array( $dynamic_shapes ) && count( $dynamic_shapes ) > 0 ) {
                 foreach ( $dynamic_shapes as $dynamic_shape ) {
                     $shape_rotate_deg = isset( $dynamic_shape['shapeRotateDeg'] ) ? $dynamic_shape['shapeRotateDeg'] : 0;
-                    echo '<div class="dynamicShape ui-resizable ui-draggable ui-draggable-handle" style=" 
+                    echo '<div class="dynamicShape ui-resizable ui-draggable ui-draggable-handle" data-shape-rotate="'.$shape_rotate_deg.'" style=" 
                         left: ' . esc_attr( $dynamic_shape['textLeft'] ) . 'px; 
                         top: ' . esc_attr( $dynamic_shape['textTop'] ) . 'px; 
                         width: ' . esc_attr( $dynamic_shape['width'] ) . 'px;
@@ -180,7 +183,7 @@ class MetaBoxes{
                             $to = (int)$plan_seat['top'];
                             $le = (int)$plan_seat['left'];
                             $degree = (int)$plan_seat['data_degree'];
-                            $seatText = isset( $plan_seat['seatText'] ) ? $plan_seat['seatText'] : '';
+//                            $seatText = isset( $plan_seat['seatText'] ) ? $plan_seat['seatText'] : '';
                             if( isset( $plan_seat['backgroundImage'] ) && $plan_seat['backgroundImage'] !== '' ) {
                                 $seat_icon_name = $plan_seat['backgroundImage'];
                                 $background_img_url = SEAT_Plan_ASSETS . "images/icons/seatIcons/" . $plan_seat['backgroundImage'] . ".png";
@@ -236,7 +239,6 @@ class MetaBoxes{
               transform: rotate('.$degree.'deg);
               ">
             <div class="tooltip" style="display: none;z-index: 999">' . esc_attr($hover_price) . '</div>
-            <div class="seatText" id="seatText'.$col.'_'.$row.'" style="display: block;">'.$seatText.'</div>
             <div class="seatNumber" id="seatNumber'.$col.'_'.$row.'" style="display: '.$block.';">'.$seat_num.'</div>
           </div>';
             }
@@ -287,6 +289,7 @@ class MetaBoxes{
                             <input type="color" id="setShapeColor" value="#3498db">
                             <button class="removeDynamicShape" id="removeDynamicShape">X</button>
                         </div>
+                        <div class="copyHolder"><button class="copyStore">Copy</button></div>
                     </div>
                 </div>
                 <div class="dynamicTextControlHolder" style="display: none">

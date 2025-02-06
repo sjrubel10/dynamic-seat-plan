@@ -39,6 +39,7 @@ class Enque{
         global $post;
         if ($post && $post->post_type === 'custom_item') {
             wp_enqueue_script('create_seat_plan',SEAT_Plan_ASSETS . 'js/create_seat_plan.js', array(), SEAT_Plan_VERSION, true);
+            wp_enqueue_script('shapemanage',SEAT_Plan_ASSETS . 'js/shapemanage.js', array(), SEAT_Plan_VERSION, true);
 
         }
     }
