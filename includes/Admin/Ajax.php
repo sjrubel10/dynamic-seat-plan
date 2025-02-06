@@ -22,44 +22,11 @@ class Ajax{
     }
 
 
-    function handle_image_upload_old() {
-//        check_ajax_referer('image_upload_nonce', 'nonce');
-
-        if (!empty($_FILES['image'])) {
-            $file = $_FILES['image'];
-
-            $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
-            if (!in_array($file['type'], $allowed_types)) {
-                wp_send_json_error(['message' => 'Invalid file type.']);
-            }
-
-            $assets_dir = SEAT_Plan_PATH . '/assets/images/icons/seatIcons';
-
-            if ( !file_exists($assets_dir ) ) {
-                wp_mkdir_p($assets_dir);
-            }
-
-            $target_file = $assets_dir . '/' . basename($file['name']);
-            error_log( print_r( [ ' tmp_name' =>  $file['tmp_name'] ], true ) );
-
-            if ( move_uploaded_file( $file['tmp_name'], $target_file ) ) {
-                $file_url = SEAT_Plan_ASSETS . 'images/icons/seatIcons/' . basename($file['name']);
-
-                wp_send_json_success(['message' => 'Image uploaded successfully!', 'file_url' => $file_url]);
-            } else {
-                wp_send_json_error(['message' => 'Failed to move the uploaded file.']);
-            }
-        } else {
-            wp_send_json_error(['message' => 'No file uploaded.']);
-        }
-    }
-
     function handle_image_upload() {
         // check_ajax_referer('image_upload_nonce', 'nonce');
 
         if (!empty($_FILES['image'])) {
             $file = $_FILES['image'];
-            error_log( print_r( [ '$file' =>  $file ], true ) );
 
             $allowed_types = array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
             if (!in_array($file['type'], $allowed_types)) {

@@ -183,7 +183,7 @@ class MetaBoxes{
                             $seatText = isset( $plan_seat['seatText'] ) ? $plan_seat['seatText'] : '';
                             if( isset( $plan_seat['backgroundImage'] ) && $plan_seat['backgroundImage'] !== '' ) {
                                 $seat_icon_name = $plan_seat['backgroundImage'];
-                                $background_img_url = SEAT_Plan_ASSETS . "images/icons/" . $plan_seat['backgroundImage'] . ".png";
+                                $background_img_url = SEAT_Plan_ASSETS . "images/icons/seatIcons/" . $plan_seat['backgroundImage'] . ".png";
                             }
                             break;
                         }
@@ -241,7 +241,34 @@ class MetaBoxes{
           </div>';
             }
         }
+         $seat_icons_dir = SEAT_Plan_PATH . '/assets/images/icons/seatIcons';
+        $images = array_diff(scandir( $seat_icons_dir ), array('.', '..'));
+        $image_files = array_filter($images, function($file) use ($seat_icons_dir) {
+            $file_path = $seat_icons_dir . '/' . $file;
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $extension = strtolower( pathinfo( $file_path, PATHINFO_EXTENSION ) );
+            return in_array( $extension, $allowed_extensions );
+        });
+        $image_files = array_values( $image_files );
 
+        $icon_images = '<div class="seatIconHolder" id="seatIconHolder">';
+        foreach ( $image_files as $seat_icon ){
+            if( $seat_icon === 'uploadIcon.png' || $seat_icon === 'remove.png' ){
+                continue;
+            }
+            if( $seat_icon ){
+                $split_image = explode('.', $seat_icon);
+                $icon_images .= '<img class="seatIcon" id="'.$split_image[0].'" src="'.SEAT_Plan_ASSETS.'images/icons/seatIcons/'.$seat_icon.'"/>';
+            }
+        }
+        $icon_images .= '<img alt="No" class="seatIcon" id="seatnull" src="'.SEAT_Plan_ASSETS.'images/icons/seatIcons/remove.png"/>
+                             <div class="seat-icon-upload-container" style="display: block">
+                                 <label for="seatIconUpload" class="seat-icon-upload-label">
+                                    <img src="'.SEAT_Plan_ASSETS.'images/icons/seatIcons/uploadIcon.png" alt="Upload Icon" class="seat-icon-image">
+                                 </label>
+                                <input class="seatIconUpload" type="file" id="seatIconUpload" name="filename">
+                             </div>  
+                         </div>';
 
         echo '</div> 
             </div>
@@ -303,21 +330,7 @@ class MetaBoxes{
                     </div>
                     <div class="seatIconContainer">
                         <span class="seatIconTitle">Select seat icon</span>
-                        <div class="seatIconHolder" id="seatIconHolder">
-                            <img class="seatIcon" id="icon2" src="'.SEAT_Plan_ASSETS.'images/icons/icon2.png"/>
-                            <img class="seatIcon" id="seat1" src="'.SEAT_Plan_ASSETS.'images/icons/seat1.png"/>
-                            <img class="seatIcon" id="chairdown" src="'.SEAT_Plan_ASSETS.'images/icons/chairdown.png"/>
-                            <img class="seatIcon" id="shofa1" src="'.SEAT_Plan_ASSETS.'images/icons/shofa1.png"/>
-                            <img class="seatIcon" id="shofa2" src="'.SEAT_Plan_ASSETS.'images/icons/shofa2.png"/>
-                            <img class="seatIcon" id="chairleft" src="'.SEAT_Plan_ASSETS.'images/icons/chairleft.png"/>
-                            <img alt="No" class="seatIcon" id="seatnull" src="'.SEAT_Plan_ASSETS.'images/icons/remove.png"/>
-                            <div class="seat-icon-upload-container" style="display: block">
-                              <label for="seatIconUpload" class="seat-icon-upload-label">
-                                <img src="'.SEAT_Plan_ASSETS.'images/icons/uploadIcon.png" alt="Upload Icon" class="seat-icon-image">
-                              </label>
-                              <input class="seatIconUpload" type="file" id="seatIconUpload" name="filename">
-                            </div>
-                        </div>
+                        '.$icon_images.'
                     </div>
                     <div class="movementHolder" id="movementHolder">
                          <div class="movementControl">

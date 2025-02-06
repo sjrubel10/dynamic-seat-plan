@@ -97,7 +97,7 @@ class DisplayPlan{
                         $border_radius = isset( $seat['border_radius'] ) ? $seat['border_radius'] : '';
 
                         if( isset( $seat['backgroundImage'] ) && $seat['backgroundImage'] !== '' ){
-                            $icon_url = SEAT_Plan_ASSETS."images/icons/".$seat['backgroundImage'].".png";
+                            $icon_url = SEAT_Plan_ASSETS."images/icons/seatIcons/".$seat['backgroundImage'].".png";
                         }
 
                         $custom_content .= '<div class="box" 
