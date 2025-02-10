@@ -87,6 +87,27 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $(document).on('click', '.templateLinks', function (e) {
+        e.preventDefault();
+        const $this = $(this);
+        $this.addClass('focus-out');
+        setTimeout(function () {
+            window.location.href = $this.attr('href');
+        }, 500);
+    });
+
+    $(document).on('click', '#enable_resize', function (e) {
+        e.preventDefault();
+        $(this).toggleClass('enable_resize_selected');
+        if( !$(this).hasClass( 'enable_resize_selected' )){
+            $(".childDiv").each(function () {
+                if ($(this).data("ui-resizable")) {
+                    $(this).resizable("destroy");
+                }
+            });
+        }
+    });
+
     $(document).on('click', '#importFromTemplatePopUp', function ( e ) {
         e.preventDefault();
         let postId = $(this).parent().parent().attr('id');
@@ -122,30 +143,6 @@ jQuery(document).ready(function ($) {
 
     });
 
-    $(document).on('click', '.templateLinks', function (e) {
-        e.preventDefault();
-        const $this = $(this);
-        $this.addClass('focus-out');
-        setTimeout(function () {
-            window.location.href = $this.attr('href');
-        }, 500);
-    });
-
-    $(document).on('click', '#enable_resize', function (e) {
-        e.preventDefault();
-        $(this).toggleClass('enable_resize_selected');
-        if( !$(this).hasClass( 'enable_resize_selected' )){
-            $(".childDiv").each(function () {
-                if ($(this).data("ui-resizable")) {
-                    $(this).resizable("destroy");
-                }
-            });
-        }
-    });
-
-    // Set seat;
-
-    // Set seat;
     $(document).on('click', '#set_seat', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_set_seat');
@@ -161,6 +158,7 @@ jQuery(document).ready(function ($) {
 
         }
     });
+
     $(document).on('click', '#set_shape', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_set_shape');
@@ -179,7 +177,7 @@ jQuery(document).ready(function ($) {
             $('#dynamicShapeHolder').fadeOut();
         }
     });
-    // let isLassoEnabled = false;
+
     $(document).on('click', '#set_multiselect', function (e) {
         e.preventDefault();
         $(this).toggleClass('enable_set_multiselect');
@@ -249,6 +247,36 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $(document).on( 'click', '#undo', function (e) {
+        e.preventDefault();
+        undo_data_display( removedData );
+
+    });
+    $(document).on("click", ".copyPaste", function (e) {
+        e.preventDefault();
+        $(this).toggleClass('selectedPaste');
+    });
+
+    let shapeIconName = '';
+    let shapeIconImageUrl = '';
+    $(document).on('click', '.shapeDisplayIcon', function (e) {
+        shapeIconName = $(this).attr('id');
+        shapeIconImageUrl = $(this).attr('src');
+        $('.dynamicShape.selectedShape').each(function () {
+            $(this).css({
+                'background-image': `url(${shapeIconImageUrl})`,
+                'background-color': '',
+                'background-size': 'cover',
+                'background-position': 'center',
+                'background-repeat': 'no-repeat'
+            });
+            if( seatIconName === 'seatnull' ){
+                seatIconName = '';
+            }
+            $(this).attr('data-background-image', shapeIconName);
+        });
+    });
+
     let seatIconName = '';
     let imageUrl = '';
     $(document).on('click', '.seatIcon', function (e) {
@@ -262,7 +290,6 @@ jQuery(document).ready(function ($) {
                 imageUrl = '';
             }
 
-            // console.log( seatIconSrc );
             $('.childDiv.save.selected').each(function () {
                 $(this).css({
                     'background-image': `url(${imageUrl})`,
@@ -570,7 +597,7 @@ jQuery(document).ready(function ($) {
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
-            removed_seat_data( $(this) );
+            removed_seat_data( $(this), 'erase' );
             $("#undo").show();
             $(this).removeClass('save');
             $(this).removeClass('selected');
@@ -585,7 +612,6 @@ jQuery(document).ready(function ($) {
 
             $this.text('');
         }
-        console.log($(this));
 
         if( selectedDivs.length > 0 ){
             $('#setPriceColorHolder').fadeIn( 1000 );
@@ -595,7 +621,7 @@ jQuery(document).ready(function ($) {
     });
 
     var removedData = [];
-    function removed_seat_data( div ){
+    function removed_seat_data( div, is_erase ){
         const id = div.data('id');
         const row = div.data('row');
         const col = div.data('col');
@@ -612,7 +638,12 @@ jQuery(document).ready(function ($) {
         const border_radius = div.css('border-radius') || 0;
         const seatText =div.find('.seatText').text();
         const boxType = 'seats';
-        removedData.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText, backgroundImage, boxType });
+        if( is_erase === 'copy' ){
+            copyData.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText, backgroundImage, boxType });
+        }else{
+            $("#undo").show();
+            removedData.push({ id, row, col, color, price, width, height, seat_number, left, top, z_index, data_degree, border_radius, seatText, backgroundImage, boxType });
+        }
     }
 
     function removed_shape_data( div, is_erase = '' ){
@@ -628,11 +659,12 @@ jQuery(document).ready(function ($) {
         if( is_erase === 'copy' ){
             copyData.push({ shapeLeft, shapeTop, shapeWidth, shapeHeight, shapeBackgroundColor, shapeBorderRadius, shapeClipPath, shapeRotateDeg, boxType });
         }else{
+            $("#undo").show();
             removedData.push({ shapeLeft, shapeTop, shapeWidth, shapeHeight, shapeBackgroundColor, shapeBorderRadius, shapeClipPath, shapeRotateDeg, boxType });
         }
 
     }
-    function removed_text_data( div ){
+    function removed_text_data( div, is_erase ){
         const textLeft = parseInt(div.css('left')) || 0;
         const textTop = parseInt(div.css('top')) || 0;
         const class_name = '';
@@ -641,7 +673,13 @@ jQuery(document).ready(function ($) {
         const text = div.children('.dynamic-text').text() || '';
         const textRotateDeg = div.data('text-degree') || 0;
         const boxType = 'texts';
-        removedData.push({ textLeft, textTop, class_name, color, fontSize, text, textRotateDeg, boxType});
+        if( is_erase === 'copy' ){
+            copyData.push({ textLeft, textTop, class_name, color, fontSize, text, textRotateDeg, boxType});
+        }else{
+            $("#undo").show();
+            removedData.push({ textLeft, textTop, class_name, color, fontSize, text, textRotateDeg, boxType});
+        }
+
     }
 
     function undo_data_display( removedData ){
@@ -725,12 +763,11 @@ jQuery(document).ready(function ($) {
         const x_axis = e.pageX - parentOffset.left;
         const y_axis = e.pageY - parentOffset.top;
 
-        // console.log( removedData );
         if( removedData.length > 0 ){
             $.each( removedData, function( index, value ) {
                 lastElementData = value;
             });
-            removedData.pop();
+            // removedData.pop();
             if( lastElementData.boxType === 'seats' ){
                 copy_paste_html = `<div class="childDiv save" id="div_${lastElementData.id}" 
                           data-id="${lastElementData.id}" 
@@ -797,12 +834,6 @@ jQuery(document).ready(function ($) {
             $("#parentDiv").append( copy_paste_html );
         }
     }
-
-    $(document).on( 'click', '#undo', function (e) {
-        e.preventDefault();
-        undo_data_display( removedData );
-
-    });
 
     //Click Text
     $(document).on('click', '.plus', function ( e ) {
@@ -942,11 +973,9 @@ jQuery(document).ready(function ($) {
         leftPosition = parseInt(leftPosition, 10);
         topPosition = parseInt(topPosition, 10);
         if ( !$('#'+rotate_id).hasClass('selected') ) {
-            // $(id).removeClass('rotateSelected');
-            selectionOrder = selectionOrder.filter(divId => divId !== rotate_id ); // Remove from order
+            selectionOrder = selectionOrder.filter(divId => divId !== rotate_id );
         } else {
-            // $(id).addClass('rotateSelected');
-            selectionOrder.push( rotate_id ); // Add to order
+            selectionOrder.push( rotate_id );
         }
         if ( !( rotate_id in rotationData)) {
             rotationData[rotate_id] = { angle: 0, position: leftPosition, topPosition: topPosition };
@@ -954,7 +983,6 @@ jQuery(document).ready(function ($) {
     }
 
     let distance = 10;
-    // Rotate Left button click
     let getOption = 'top-to-bottom';
     $('#rotateLeft').click(function ( e ) {
         e.preventDefault();
@@ -975,11 +1003,6 @@ jQuery(document).ready(function ($) {
             }
 
             $(`#${id}`).attr('data-degree', rotationData[id].angle);
-            /*$(`#${id}`).css({
-                transform: `rotate(${rotationData[id].angle}deg)`,
-                left: `${rotationData[id].position}px`,
-                'z-index': 10,
-            });*/
             if( getOption === 'top-to-bottom' || getOption === 'bottom-to-top' ){
                 $(`#${id}`).css({
                     transform: `rotate(${rotationData[id].angle}deg)`,
@@ -1487,9 +1510,10 @@ jQuery(document).ready(function ($) {
         }
 
         if( copyData.length > 0 ){
-            copy_data_display( copyData, e );
+            if( $('.copyPaste').hasClass('selectedPaste')){
+                copy_data_display( copyData, e );
+            }
         }
-
 
     });
 
@@ -1509,12 +1533,30 @@ jQuery(document).ready(function ($) {
     });
 
     var copyData = [];
-    $(document).on("click", ".copyStore", function (e) {
+
+    $(document).on("click", ".shapeCopyStore", function (e) {
         copyData = [];
         e.preventDefault();
         let getShapeData = $("#parentDiv").find('.dynamicShape.selectedShape');
         removed_shape_data( getShapeData, 'copy' );
-        console.log( copyData );
+        alert('Your item is copied select the paste button and click where you want to paste.')
+    });
+    $(document).on("click", ".textCopy", function (e) {
+        copyData = [];
+        e.preventDefault();
+        const copyTextDiv = $("#parentDiv").find('.text-wrapper.textSelected');
+        removed_text_data( copyTextDiv, 'copy' );
+        alert('Your item is copied select the paste button and click where you want to paste.');
+    });
+    $(document).on("click", ".seatCopyStore", function (e) {
+        copyData = [];
+        e.preventDefault();
+        if( $("#set_single_select").hasClass('enable_single_seat_selection')){
+            const copySeatDiv = $("#parentDiv").find('.childDiv.save.selected');
+            removed_seat_data( copySeatDiv, 'copy' );
+            alert('Your item is copied select the paste button and click where you want to paste.');
+        }
+
     });
 
     $(document).on("click", ".shapeRotate", function (e) {
@@ -1558,7 +1600,7 @@ jQuery(document).ready(function ($) {
         const dynamicText =  $("#parentDiv").find('.text-wrapper.textSelected').children('.dynamic-text');
 
         const textDiv = $("#parentDiv").find('.text-wrapper.textSelected');
-        removed_text_data( textDiv );
+        removed_text_data( textDiv, 'erase' );
         dynamicText.parent().remove();
     });
 
@@ -1845,7 +1887,7 @@ jQuery(document).ready(function ($) {
         }
 
         if( $('#removeSelected').hasClass( 'enable_erase_seat' )) {
-            removed_text_data( $(this) );
+            removed_text_data( $(this), 'erase'  );
             $(this).remove();
         };
     });

@@ -35,10 +35,11 @@ class MetaBoxes{
                 <button class="set_shape" id="set_shape">Add Shape +</button>
                 <button class="make_circle" id="enable_resize" style="display: none">Resize</button>
                 <button class="drag_drop" id="enable_drag_drop" style="display: none">Drag & Drop</button>
-                <button class="removeSelected" id="removeSelected">Erase</button>
                 <button id="setTextnew" class="setTextnew">Set Text</button>
                 <button id="importFromTemplatePopUp" class="importFromTemplatePopUp">Import From Template </button>
+                <button class="removeSelected" id="removeSelected">Erase</button>
                 <button id="undo" class="undo">Undo </button>
+                <button id="copyPaste" class="copyPaste">Paste</button>
 
 
 
@@ -226,7 +227,7 @@ class MetaBoxes{
               data-col="' . $row . '" 
               data-seat-num=" ' . $seat_num . ' " 
               data-price=" ' . $seat_price . ' " 
-              data-degree=0
+              data-degree='.$degree.'
               data-background-image="'.$seat_icon_name.'"
               style="
               left: ' . $left . 'px; 
@@ -289,7 +290,20 @@ class MetaBoxes{
                             <input type="color" id="setShapeColor" value="#3498db">
                             <button class="removeDynamicShape" id="removeDynamicShape">X</button>
                         </div>
-                        <div class="copyHolder"><button class="copyStore">Copy</button></div>
+                        <div class="shapeDisplayIconHolder">
+                            <div class="shapeIconTitleTextHolder"><span class="shapeIconTitleText">Add Shape</span></div>
+                            <div class="shapeDisplayIcons">
+                                <img class="shapeDisplayIcon" id="table1" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/table1.png'.'"/>
+                                <img class="shapeDisplayIcon" id="table2" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/table2.png'.'"/>
+                                <img class="shapeDisplayIcon" id="table3" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/table3.png'.'"/>
+                                <img class="shapeDisplayIcon" id="table4" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/table4.png'.'"/>
+                                <img class="shapeDisplayIcon" id="dining2" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/dining2.png'.'"/>
+                                <img class="shapeDisplayIcon" id="dining1" src="'.SEAT_Plan_ASSETS.'images/icons/tableIcon/dining1.png'.'"/>
+                            </div>
+                        </div>
+                        <div class="copyHolder">
+                            <button class="shapeCopyStore">Copy</button>
+                        </div>
                     </div>
                 </div>
                 <div class="dynamicTextControlHolder" style="display: none">
@@ -306,6 +320,9 @@ class MetaBoxes{
                             <img class="textRotate" id="textRotateLeft" src="'.SEAT_Plan_ASSETS.'images/icons/rotate/rotate_left.webp'.'"/>
                         </div>
                     </div>
+                    <div class="copyHolder">
+                        <button class="textCopy">Copy</button>
+                    </div>
                 </div>
                 
                 <button id="clearAll"> All Clear</button>
@@ -313,6 +330,9 @@ class MetaBoxes{
                 <button class="savePlan" id="savePlanAsTemplate">Save Plan with Template</button>
                 <button id="setTextPlan" class="setTextPlan" style="display: none">Set text</button>
                 <div class="setPriceColorHolder" id="setPriceColorHolder" style="display: none">
+                    <div class="copyHolder">
+                        <button class="seatCopyStore">Copy</button>
+                    </div>
                     <div class="rotateControls">
                         <select class="rotationHandle" name="rotationHandle" id="rotationHandle" style="display: none">
                             <option class="options" selected value="top-to-bottom">Rotate top to bottom</option>
