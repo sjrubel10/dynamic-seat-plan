@@ -19,6 +19,36 @@ class Ajax{
         add_action('wp_ajax_image_upload', [ $this,'handle_image_upload' ] );
         add_action('wp_ajax_nopriv_image_upload', [ $this,'handle_image_upload' ] );
 
+        add_action('wp_ajax_process_create_box_data', [ $this, 'process_create_box_data'] );
+        add_action('wp_ajax_nopriv_process_create_box_data', [ $this, 'process_create_box_data'] );
+
+    }
+
+    public function process_create_box_data(){
+        $box_size = isset($_POST['box_size']) ? intval($_POST['box_size']) : 0;
+        $numberOfRows = isset($_POST['numberOfRows']) ? intval($_POST['numberOfRows']) : 0;
+        $numberOfColumns = isset($_POST['numberOfColumns']) ? intval($_POST['numberOfColumns']) : 0;
+        $boxGap = isset($_POST['boxGap']) ? intval($_POST['boxGap']) : 0;
+
+        if ($box_size <= 0 || $numberOfRows <= 0 || $numberOfColumns <= 0 || $boxGap < 0) {
+            wp_send_json_error(['message' => 'Invalid input. Please enter valid numbers.']);
+        }
+
+        $response_data = [
+            'box_size' => $box_size,
+            'numberOfRows' => $numberOfRows,
+            'numberOfColumns' => $numberOfColumns,
+            'boxGap' => $boxGap,
+        ];
+
+        $result = update_option( 'create_box_data', $response_data );
+        if( $result ){
+            $message = 'Successfully updated box data';
+         }else{
+            $message = 'Failed to update box data';
+        }
+
+        wp_send_json_success( $message );
     }
 
 

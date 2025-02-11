@@ -81,12 +81,23 @@ class MetaBoxes{
             $shapeText .= '<div class="shapeText '.$select_class.'" id="'.$key.'"><img class="shapeIcon" src="'.$src.'" /></div>';
         }
 
-        $box_size = 35;
-        $rows = 30;
-        $columns = 24;
+        $get_create_box_data = get_option( 'create_box_data' );
+        if( is_array( $get_create_box_data ) && count( $get_create_box_data ) > 0 ){
+            $box_size = isset( $get_create_box_data['box_size'] ) ? absint( $get_create_box_data['box_size'] ) : 35;
+            $rows = isset( $get_create_box_data['numberOfRows'] ) ? absint( $get_create_box_data['numberOfRows'] ) : 30;
+            $columns = isset( $get_create_box_data['numberOfColumns'] ) ? absint( $get_create_box_data['numberOfColumns'] ) : 24;
+            $gap = isset( $get_create_box_data['boxGap'] ) ? absint( $get_create_box_data['boxGap'] ) : 10;
+        }else{
+            $box_size = 35;
+            $rows = 30;
+            $columns = 24;
+            $gap = 10;
+        }
+
+
         $childWidth = $box_size;
         $childHeight = $box_size + 5;
-        $gap = 10;
+
 
         $seats = [];
         for ( $row = 0; $row < $rows; $row++ ) {
@@ -184,7 +195,6 @@ class MetaBoxes{
                             $to = (int)$plan_seat['top'];
                             $le = (int)$plan_seat['left'];
                             $degree = (int)$plan_seat['data_degree'];
-//                            $seatText = isset( $plan_seat['seatText'] ) ? $plan_seat['seatText'] : '';
                             if( isset( $plan_seat['backgroundImage'] ) && $plan_seat['backgroundImage'] !== '' ) {
                                 $seat_icon_name = $plan_seat['backgroundImage'];
                                 $background_img_url = SEAT_Plan_ASSETS . "images/icons/seatIcons/" . $plan_seat['backgroundImage'] . ".png";

@@ -26,7 +26,9 @@ class Enque{
             ]);
         }
         wp_enqueue_script('templatemanage',SEAT_Plan_ASSETS . 'js/templatemanage.js', array(), SEAT_Plan_VERSION, true);
+        wp_enqueue_script('settings',SEAT_Plan_ASSETS . 'js/settings.js', array(), SEAT_Plan_VERSION, true);
         wp_enqueue_style('templates', SEAT_Plan_ASSETS . 'css/templates.css', array(), SEAT_Plan_VERSION );
+        wp_enqueue_style('settings', SEAT_Plan_ASSETS . 'css/settings.css', array(), SEAT_Plan_VERSION );
         wp_localize_script('templatemanage', 'site_ajax_object', [
             'site_ajax_url' => admin_url('admin-ajax.php'),
             'site_nonce' => wp_create_nonce('ajax_nonce'),

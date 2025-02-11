@@ -147,10 +147,45 @@ class Menu{
         <?php
     }
 
-    public function render_settings_page(){ ?>
+    public function render_settings_page(){
+
+        $get_create_box_data = get_option( 'create_box_data' );
+        error_log( print_r( [ '$response_data' => $get_create_box_data ], true ) );
+        if( is_array( $get_create_box_data ) && count( $get_create_box_data ) > 0 ){
+            $box_size = isset( $get_create_box_data['box_size'] ) ? absint( $get_create_box_data['box_size'] ) : 35;
+            $numberOfRows = isset( $get_create_box_data['numberOfRows'] ) ? absint( $get_create_box_data['numberOfRows'] ) : 30;
+            $numberOfColumns = isset( $get_create_box_data['numberOfColumns'] ) ? absint( $get_create_box_data['numberOfColumns'] ) : 24;
+            $boxGap = isset( $get_create_box_data['boxGap'] ) ? absint( $get_create_box_data['boxGap'] ) : 10;
+        }else{
+            $box_size =  30;
+            $numberOfRows = 25;
+            $numberOfColumns = 35;
+            $boxGap = 10;
+        }
+        ?>
         <div class="wrap">
             <h1><?php _e('Seat Plan Settings', 'textdomain'); ?></h1>
-            <p><?php _e('This is the Settings page under the Seat Plan menu.', 'textdomain'); ?></p>
+            <div class="form-container">
+                <div class="createBoxForm">
+                    <div class="form-group">
+                        <label for="box_size">Box size:</label>
+                        <input type="number" id="box_size" name="box_size" value="<?php echo esc_attr( $box_size ) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numberOfRows">Number of rows:</label>
+                        <input type="number" id="numberOfRows" name="numberOfRows" value="<?php echo esc_attr( $numberOfRows ) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numberOfColumns">Number of columns:</label>
+                        <input type="number" id="numberOfColumns" name="numberOfColumns" value="<?php echo esc_attr( $numberOfColumns ) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="boxGap">Box gap in pixel:</label>
+                        <input type="number" id="boxGap" name="boxGap" value="<?php echo esc_attr( $boxGap ) ?>" required>
+                    </div>
+                    <button type="submit" class="createBoxSubmit">Submit</button>
+                </div>
+            </div>
         </div>
         <?php
     }

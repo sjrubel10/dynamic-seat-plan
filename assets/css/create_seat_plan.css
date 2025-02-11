@@ -15,6 +15,8 @@
     display: block;
     width: 150px;
     margin-left: 10px;
+    max-height: 500px;
+    overflow: scroll;
 }
 #parentDiv {
     border: 1px solid #e9e4e4;
@@ -961,4 +963,21 @@ button.zoom-in:hover, button.zoom-out:hover {
 .seat-icon-image:hover {
     transform: scale(1.05); /* Slight zoom effect on hover */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Adds a shadow */
+}
+
+
+/* Custom scrollbar styles */
+.seatActionControl::-webkit-scrollbar {
+    width: 4px;
+}
+.seatActionControl::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+.seatActionControl::-webkit-scrollbar-thumb {
+    background: #c1bfbf;
+    border-radius: 4px;
+}
+.seatActionControl::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

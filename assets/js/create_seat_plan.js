@@ -152,6 +152,7 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
+            $('#copyPaste').removeClass('selectedPaste');
             $('body').removeClass('lasso-cursor');
             isSetTextMode = false;
             $('#dynamicShapeHolder').fadeOut();
@@ -168,6 +169,7 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#set_seat').removeClass('enable_set_seat');
             $('#setTextnew').removeClass('enable_set_text');
+            $('#copyPaste').removeClass('selectedPaste');
             $('body').removeClass('lasso-cursor');
             $("#make_circle").fadeIn();
             isSetTextMode = false;
@@ -194,6 +196,7 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
+            $('#copyPaste').removeClass('selectedPaste');
             $('#dynamicShapeHolder').fadeOut();
             isSetTextMode = false;
             $('body').addClass('lasso-cursor');
@@ -211,6 +214,7 @@ jQuery(document).ready(function ($) {
             $('#set_multiselect').removeClass('enable_set_multiselect');
             $('#set_shape').removeClass('enable_set_shape');
             $('#setTextnew').removeClass('enable_set_text');
+            $('#copyPaste').removeClass('selectedPaste');
             $('#dynamicShapeHolder').fadeOut();
             $("#make_circle").fadeIn();
             isSetTextMode = false;
@@ -228,6 +232,7 @@ jQuery(document).ready(function ($) {
             $('#removeSelected').removeClass('enable_erase_seat');
             $('#setTextnew').removeClass('enable_set_text');
             $('#set_shape').removeClass('enable_set_shape');
+            $('#copyPaste').removeClass('selectedPaste');
             $('#dynamicShapeHolder').fadeOut();
             $('body').removeClass('lasso-cursor');
 
@@ -247,6 +252,23 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $(document).on( 'click', '#setTextnew',function ( e ) {
+        e.preventDefault();
+        $(this).toggleClass('enable_set_text');
+        if( $(this).hasClass('enable_set_text')){
+            isSetTextMode = !isSetTextMode;
+            $('#set_single_select').removeClass('enable_single_seat_selection');
+            $('#set_seat').removeClass('enable_set_seat');
+            $('#set_multiselect').removeClass('enable_set_multiselect');
+            $('#removeSelected').removeClass('enable_erase_seat');
+            $('#set_shape').removeClass('enable_set_shape');
+            $('#copyPaste').removeClass('selectedPaste');
+            $('#dynamicShapeHolder').fadeOut();
+        }else{
+            isSetTextMode = false;
+        }
+    });
+
     $(document).on( 'click', '#undo', function (e) {
         e.preventDefault();
         undo_data_display( removedData );
@@ -255,6 +277,12 @@ jQuery(document).ready(function ($) {
     $(document).on("click", ".copyPaste", function (e) {
         e.preventDefault();
         $(this).toggleClass('selectedPaste');
+        $('#set_single_select').removeClass('enable_single_seat_selection');
+        $('#set_multiselect').removeClass('enable_set_multiselect');
+        $('#removeSelected').removeClass('enable_erase_seat');
+        $('#set_seat').removeClass('enable_set_seat');
+        $('#setTextnew').removeClass('enable_set_text');
+        $('#set_shape').removeClass('enable_set_shape');
     });
 
     let shapeIconName = '';
@@ -367,36 +395,6 @@ jQuery(document).ready(function ($) {
     });
 
     let isSetTextMode = false;
-    $('#setTextnew').click(function ( e ) {
-        e.preventDefault();
-        $(this).toggleClass('enable_set_text');
-        if( $(this).hasClass('enable_set_text')){
-            isSetTextMode = !isSetTextMode;
-            $('#set_single_select').removeClass('enable_single_seat_selection');
-            $('#set_seat').removeClass('enable_set_seat');
-            $('#set_multiselect').removeClass('enable_set_multiselect');
-            $('#removeSelected').removeClass('enable_erase_seat');
-            $('#set_shape').removeClass('enable_set_shape');
-            $('#dynamicShapeHolder').fadeOut();
-        }else{
-            isSetTextMode = false;
-        }
-    });
-
-    $(document).on('click', '#make_circle', function ( e ) {
-        e.preventDefault();
-        $(this).toggleClass('circleSelected');
-    });
-
-    $(document).on('click', '#enable_drag_drop', function (e) {
-        e.preventDefault();
-        $(this).toggleClass('enable_drag_drop');
-        if( !$(this).hasClass( 'enable_drag_drop' )){
-            $(".childDiv").removeClass("ui-draggable ui-draggable-handle");
-            selectedDraggableDivs = [];
-        }
-        //ui-draggable ui-draggable-handle
-    });
 
     let selectedDivs = [];
     let selectedDraggableDivs = [];
@@ -618,7 +616,68 @@ jQuery(document).ready(function ($) {
         }else{
             $('#setPriceColorHolder').fadeOut();
         }
+
+        if( copyData.length > 0 ){
+            if( $('.copyPaste').hasClass('selectedPaste')){
+                let copyLeftPos = $(this).css('left');
+                let copyTopPos = $(this).css('top');
+                let copyDataRow = $(this).attr('data-row');
+                let copyDataCol = $(this).attr('data-col');
+                let copyDataID = $(this).attr('data-id');
+                let copyId = "div_"+copyDataID;
+                $(this).remove();
+                let whereAppend = {
+                    left: copyLeftPos,
+                    top: copyTopPos,
+                    row: copyDataRow,
+                    col: copyDataCol,
+                    data_id: copyDataID,
+                    id: copyId,
+                }
+
+                copy_paste_seats( copyData, e, whereAppend );
+            }
+        }
+
     });
+
+    function copy_paste_seats( removedData, e, whereAppend ){
+        let lastElementData = {};
+        let copy_paste_html = '';
+
+        const x_axis =  whereAppend.left;
+        const y_axis = whereAppend.top;
+
+        $.each( removedData, function( index, value ) {
+            lastElementData = value;
+        });
+
+        if( lastElementData.boxType === 'seats' ){
+            copy_paste_html = `<div class="childDiv save" id="div_${whereAppend.id}" 
+                          data-id="${whereAppend.data_id}" 
+                          data-row="${whereAppend.row}" 
+                          data-col="${whereAppend.col}" 
+                          data-seat-num="${lastElementData.seat_number}" 
+                          data-price="${lastElementData.price}" 
+                          data-degree="${lastElementData.data_degree}" 
+                          data-background-image="${lastElementData.backgroundImage}" 
+                          style="
+                              left: ${x_axis}; 
+                              top: ${y_axis};  
+                              width: ${lastElementData.width}; 
+                              height: ${lastElementData.height}; 
+                              background-color: ${lastElementData.color}; 
+                              background-image: url('http://localhost/mage_people/wp-content/plugins/dynamic-seat-plan/assets/images/icons/seatIcons/${lastElementData.backgroundImage}.png'); 
+                              z-index: ${lastElementData.z_index}; 
+                              transform: rotate(${lastElementData.data_degree}deg);
+                              border-radius: ${lastElementData.border_radius};
+                          ">
+                          <div class="tooltip" style="display: none; z-index: 999;">Price: ${lastElementData.price}</div>
+                          <div class="seatNumber" id="seatNumber_${lastElementData.id}" style="display: block;">${lastElementData.seat_number}</div>
+                      </div>`;
+        }
+        $("#parentDiv").append( copy_paste_html );
+    }
 
     var removedData = [];
     function removed_seat_data( div, is_erase ){
@@ -768,7 +827,7 @@ jQuery(document).ready(function ($) {
                 lastElementData = value;
             });
             // removedData.pop();
-            if( lastElementData.boxType === 'seats' ){
+            if( lastElementData.boxType === 'seats_old' ){
                 copy_paste_html = `<div class="childDiv save" id="div_${lastElementData.id}" 
                           data-id="${lastElementData.id}" 
                           data-row="${lastElementData.row}" 
